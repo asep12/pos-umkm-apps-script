@@ -250,6 +250,201 @@ function ubahHargaMassal(token, data) {
   });
 }
 
+/**
+ * Impor item dari teks tabel (tempel dari Excel/Sheets atau isi file CSV). Admin.
+ * data: {teks, mode: 'tambah'|'perbarui', buatBarcode, pratinjau}
+ * - Baris pertama = judul kolom (nama kolom bebas, lihat petaKolomImpor_). Nama item dipakai sebagai kunci.
+ * - mode 'tambah': item yang namanya sudah ada dilewati. 'perbarui': harga/kategori/satuan/kode/stok min diperbarui
+ *   (stok TIDAK diubah — gunakan Stok masuk/Opname agar tercatat di riwayat).
+ * - pratinjau: hanya laporan per baris, tidak menyimpan.
+ */
+function imporItem(token, data) {
+  return jalankan_(token, ROLE.ADMIN, function (sesi) {
+    const d = data || {};
+    const teks = String(d.teks || '');
+    if (teks.length > 500000) throw galat_('VALIDASI', 'Data terlalu besar (maks ±500 KB). Pecah menjadi beberapa impor.');
+    const tabel = parseTabelTeks_(teks);
+    if (!tabel.baris.length) throw galat_('VALIDASI', 'Tidak ada baris data. Baris pertama harus berisi judul kolom.');
+    if (tabel.baris.length > MAKS_BARIS_IMPOR) throw galat_('VALIDASI', 'Maksimal ' + MAKS_BARIS_IMPOR + ' baris per impor.');
+    const peta = petaKolomImpor_(tabel.header);
+    const jalankan = function () {
+      const it = bacaItem_();
+      const rencana = rencanaImpor_(tabel, peta, it, d.mode === 'perbarui', !!d.buatBarcode);
+      if (!d.pratinjau) terapkanImpor_(rencana, it, sesi);
+      return {
+        disimpan: !d.pratinjau, kolom: Object.keys(peta), baru: rencana.baru.length, diperbarui: rencana.ubah.length,
+        dilewati: rencana.laporan.filter(function (l) { return l.aksi === 'Lewati'; }).length,
+        galat: rencana.laporan.filter(function (l) { return l.aksi === 'Galat'; }).length,
+        laporan: rencana.laporan.slice(0, 300),
+      };
+    };
+    return d.pratinjau ? jalankan() : denganKunci_(jalankan);
+  });
+}
+
+function ringkasPersediaan(token) {
+  return jalankan_(token, ROLE.ADMIN, function () {
+    return hitungPersediaan_(daftarItemCache_());
+  });
+}
+
+/**
+ * Data label harga + barcode untuk item terpilih. buatKode: item tanpa kode diberi barcode EAN-13 otomatis
+ * (awalan 200, dari ID item) dan disimpan. bits = pola batang EAN-13 (null bila kode bukan EAN-13).
+ */
+function labelItem(token, data) {
+  return jalankan_(token, ROLE.ADMIN, function () {
+    const d = data || {};
+    const ids = Array.isArray(d.ids) ? d.ids.map(String).slice(0, 500) : [];
+    if (!ids.length) throw galat_('VALIDASI', 'Pilih minimal satu item.');
+    const jalankan = function () {
+      const it = bacaItem_();
+      const terpakai = {};
+      it.daftar.forEach(function (i) { if (i.kode) terpakai[i.kode] = true; });
+      let adaBaru = false;
+      const hasil = ids.map(function (id) {
+        const i = it.peta[id];
+        if (!i) throw galat_('TIDAK_ADA', 'Item ' + id + ' tidak ditemukan.');
+        if (!i.kode && d.buatKode && i.tipe !== 'Bahan') {
+          const kode = kodeDariIdItem_(i.id);
+          if (kode && !terpakai[kode]) {
+            i.kode = kode;
+            terpakai[kode] = true;
+            it.tabel.baris[i.idx][it.tabel.kol.Kode] = kode;
+            adaBaru = true;
+          }
+        }
+        let bits = null;
+        try { bits = i.kode ? ean13Bits_(i.kode) : null; } catch (e) { bits = null; }
+        return { id: i.id, nama: i.nama, harga: i.hargaJual, satuan: i.satuan, kode: i.kode, bits: bits };
+      });
+      if (adaBaru) {
+        const kol = it.tabel.kol.Kode;
+        // Kode berupa teks (apostrof) agar angka 13 digit tidak diubah Sheets menjadi notasi ilmiah.
+        tulisKolom_(it.tabel, 'Kode', it.tabel.baris.map(function (r) { return r[kol] === '' ? '' : amanSel_(String(r[kol])); }));
+        naikkanVersi_('item');
+      }
+      return hasil;
+    };
+    return d.buatKode ? denganKunci_(jalankan) : jalankan();
+  });
+}
+
+/** Susun rencana impor per baris (tanpa menulis). */
+function rencanaImpor_(tabel, peta, it, perbarui, buatBarcode) {
+  const namaAda = {};
+  it.daftar.forEach(function (i) { namaAda[i.nama.toLowerCase()] = i; });
+  const kodeAda = {};
+  it.daftar.forEach(function (i) { if (i.kode) kodeAda[i.kode.toLowerCase()] = i.id; });
+  const semuaId = it.daftar.map(function (i) { return i.id; });
+  const diFile = {};
+  const r = { baru: [], ubah: [], laporan: [], kolom: peta };
+
+  tabel.baris.forEach(function (row, n) {
+    const nomor = n + 2; // baris 1 = judul
+    let data;
+    try {
+      data = normalisasiItem_(barisImporKeItem_(row, peta));
+    } catch (e) {
+      r.laporan.push({ baris: nomor, nama: String(row[peta.nama] || ''), aksi: 'Galat', pesan: e.message });
+      return;
+    }
+    const kunci = data.nama.toLowerCase();
+    if (diFile[kunci]) {
+      r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Lewati', pesan: 'Nama ganda di file (baris ' + diFile[kunci] + ').' });
+      return;
+    }
+    diFile[kunci] = nomor;
+    const lama = namaAda[kunci];
+    const pemilikKode = data.kode ? kodeAda[data.kode.toLowerCase()] : null;
+    if (pemilikKode && (!lama || pemilikKode !== lama.id)) {
+      r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Galat', pesan: 'Kode ' + data.kode + ' sudah dipakai item lain.' });
+      return;
+    }
+    if (lama) {
+      if (!perbarui) {
+        r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Lewati', pesan: 'Sudah ada (' + lama.id + ').' });
+        return;
+      }
+      if (lama.tipe !== data.tipe) {
+        r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Galat', pesan: 'Tipe berbeda dari item yang ada (' + lama.tipe + ').' });
+        return;
+      }
+      if (data.kode) kodeAda[data.kode.toLowerCase()] = lama.id;
+      r.ubah.push({ lama: lama, data: data });
+      r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Perbarui', pesan: lama.id + (lama.hargaJual !== data.hargaJual ? ' · harga ' + lama.hargaJual + ' → ' + data.hargaJual : '') });
+      return;
+    }
+    const id = idItemBerikut_(semuaId);
+    semuaId.push(id);
+    let kode = data.kode;
+    if (!kode && buatBarcode && data.tipe === 'Barang') {
+      const k = kodeDariIdItem_(id);
+      if (k && !kodeAda[k.toLowerCase()]) kode = k;
+    }
+    if (kode) kodeAda[kode.toLowerCase()] = id;
+    data.kode = kode;
+    r.baru.push({ id: id, data: data });
+    r.laporan.push({ baris: nomor, nama: data.nama, aksi: 'Baru', pesan: id + (kode ? ' · ' + kode : '') });
+  });
+  return r;
+}
+
+/** Tulis rencana impor: pembaruan dalam satu setValues, item baru ditambahkan, log harga & stok awal dicatat. */
+function terapkanImpor_(rencana, it, sesi) {
+  const t = it.tabel;
+  const k = t.kol;
+  const sekarang = new Date();
+  const logHarga = [];
+  const resep = bacaResep_();
+  const ada = function (f) { return rencana.kolom[f] !== undefined; };
+  rencana.ubah.forEach(function (u) {
+    const row = t.baris[u.lama.idx];
+    const d = u.data;
+    // HPP menu ber-resep tetap dihitung dari resep, bukan dari file.
+    const hbBaru = !ada('hargaBeli') || (d.tipe === 'Menu' && (resep.peta[u.lama.id] || []).length) ? u.lama.hargaBeli : d.hargaBeli;
+    const hjBaru = ada('hargaJual') ? d.hargaJual : u.lama.hargaJual;
+    // Hanya kolom yang ADA di file yang diperbarui (file "Nama + Harga" tidak boleh menolkan harga beli, dst.).
+    if (d.kode) row[k.Kode] = d.kode;
+    if (ada('kategori') && d.kategori) row[k.Kategori] = d.kategori;
+    if (ada('satuan')) row[k.Satuan] = d.satuan;
+    row[k['Harga Beli']] = hbBaru;
+    if (ada('hargaJual')) row[k['Harga Jual']] = d.hargaJual;
+    if (ada('stokMin')) row[k['Stok Min']] = d.stokMin;
+    if (ada('lacak')) row[k['Lacak Stok']] = d.lacak ? 'Ya' : 'Tidak';
+    if (u.lama.hargaBeli !== hbBaru || u.lama.hargaJual !== hjBaru) {
+      logHarga.push({ id: u.lama.id, hbLama: u.lama.hargaBeli, hbBaru: hbBaru, hjLama: u.lama.hargaJual, hjBaru: hjBaru });
+    }
+    it.peta[u.lama.id].hargaBeli = hbBaru;
+  });
+  if (rencana.ubah.length) {
+    tulisSemuaBaris_(t);
+    terapkanHppMenu_(it, resep.peta, logHarga);
+  }
+  if (rencana.baru.length) {
+    tambahObjek_(t, rencana.baru.map(function (b) {
+      const d = b.data;
+      return {
+        ID: b.id, Kode: amanSel_(d.kode), Nama: amanSel_(d.nama), Tipe: d.tipe, Kategori: amanSel_(d.kategori),
+        Satuan: amanSel_(d.satuan), 'Harga Beli': d.hargaBeli, 'Harga Jual': d.hargaJual, Stok: d.stokAwal,
+        'Stok Min': d.stokMin, 'Lacak Stok': d.lacak ? 'Ya' : 'Tidak', Aktif: 'Ya', Foto: '',
+      };
+    }));
+    rencana.baru.forEach(function (b) {
+      logHarga.push({ id: b.id, hbLama: '', hbBaru: b.data.hargaBeli, hjLama: '', hjBaru: b.data.hargaJual });
+    });
+    const logStok = rencana.baru.filter(function (b) { return b.data.stokAwal > 0; }).map(function (b) {
+      return {
+        Tanggal: sekarang, 'ID Item': b.id, Nama: amanSel_(b.data.nama), Jenis: 'Masuk', Qty: b.data.stokAwal,
+        'Stok Sesudah': b.data.stokAwal, Ref: '', 'Kasir/User': sesi.u, Keterangan: 'Impor item',
+      };
+    });
+    tambahObjek_(bacaHeader_(SHEET.STOK_LOG), logStok);
+  }
+  catatHarga_(logHarga, sekarang, sesi.u);
+  naikkanVersi_('item');
+}
+
 function riwayatHarga(token, id) {
   return jalankan_(token, ROLE.ADMIN, function () {
     const idItem = String(id || '');

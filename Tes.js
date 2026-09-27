@@ -351,6 +351,44 @@ function daftarKasusTes_() {
       harusGalat_(function () { normalisasiBill_({ nama: '', items: [{ idItem: 'X', qty: 1 }] }); }, 'VALIDASI');
       harusGalat_(function () { normalisasiBill_({ nama: 'M1', items: [] }); }, 'VALIDASI');
     },
+    'angkaIndonesia_ membaca format Excel Indonesia': function () {
+      samaDengan_([angkaIndonesia_('17.000'), angkaIndonesia_('Rp 17.000'), angkaIndonesia_('1,5'), angkaIndonesia_('1.000,25'), angkaIndonesia_('2.5'), angkaIndonesia_(12)],
+        [17000, 17000, 1.5, 1000.25, 2.5, 12]);
+      samaDengan_(isNaN(angkaIndonesia_('abc')), true);
+    },
+    'parseTabelTeks_: tab (tempel Excel), titik koma, koma berkutip': function () {
+      const tab = parseTabelTeks_('Nama\tHarga Jual\nGula\t17.000\n\nKopi\t8000\n');
+      samaDengan_([tab.pemisah, tab.header, tab.baris], ['\t', ['Nama', 'Harga Jual'], [['Gula', '17.000'], ['Kopi', '8000']]]);
+      samaDengan_(parseTabelTeks_('﻿Nama;Harga\r\nMinyak 1 L;18.000\r\n').baris, [['Minyak 1 L', '18.000']]);
+      samaDengan_(parseTabelTeks_('Nama,Harga\n"Teh ""Wangi"", 250 g",5000').baris, [['Teh "Wangi", 250 g', '5000']]);
+    },
+    'petaKolomImpor_ & barisImporKeItem_': function () {
+      const peta = petaKolomImpor_(['Nama Barang', 'HPP', 'Harga', 'Stok', 'Barcode', 'jenis']);
+      samaDengan_([peta.nama, peta.hargaBeli, peta.hargaJual, peta.stokAwal, peta.kode, peta.tipe], [0, 1, 2, 3, 4, 5]);
+      const item = barisImporKeItem_(['Gula', '14.500', '17.000', '1,5', '00123', 'barang'], peta);
+      samaDengan_([item.tipe, item.hargaBeli, item.hargaJual, item.stokAwal, item.kode, item.lacak], ['Barang', 14500, 17000, 1.5, '00123', true]);
+      harusGalat_(function () { barisImporKeItem_(['X', 'mahal', '1', '', '', ''], peta); }, 'VALIDASI');
+      harusGalat_(function () { petaKolomImpor_(['Harga', 'Stok']); }, 'VALIDASI');
+    },
+    'hitungPersediaan_: stok × harga beli per kategori': function () {
+      const r = hitungPersediaan_([
+        { aktif: true, lacak: true, tipe: 'Barang', kategori: 'Sembako', stok: 10, hargaBeli: 14500 },
+        { aktif: true, lacak: true, tipe: 'Bahan', kategori: 'Bahan', stok: 1000, hargaBeli: 150 },
+        { aktif: true, lacak: true, tipe: 'Menu', kategori: 'Minuman', stok: 5, hargaBeli: 3000 },
+        { aktif: false, lacak: true, tipe: 'Barang', kategori: 'Sembako', stok: 5, hargaBeli: 1000 },
+        { aktif: true, lacak: true, tipe: 'Barang', kategori: 'Sembako', stok: -2, hargaBeli: 1000 },
+      ]);
+      samaDengan_([r.nilai, r.jumlahItem, r.perKategori.map(function (k) { return k.kategori; })], [295000, 2, ['Bahan', 'Sembako']]);
+    },
+    'ean13Bits_: 95 modul, pola penjaga, tolak digit cek salah': function () {
+      const b = ean13Bits_('4006381333931');
+      samaDengan_([b.length, b.slice(0, 3), b.slice(45, 50), b.slice(-3)], [95, '101', '01010', '101']);
+      // Digit pertama 4 -> paritas LGLLGG: digit ke-2 ("0") memakai kode L "0001101".
+      samaDengan_(b.slice(3, 10), '0001101');
+      harusGalat_(function () { ean13Bits_('4006381333932'); }, 'VALIDASI');
+      samaDengan_(kodeDariIdItem_('ITM-0057'), ean13_('200000000057'));
+      samaDengan_(kodeDariIdItem_('X-1'), '');
+    },
     'format teks angka Indonesia': function () {
       samaDengan_(formatRupiahTeks_(1234567), 'Rp 1.234.567');
       samaDengan_(formatAngkaTeks_(1.5), '1,5');

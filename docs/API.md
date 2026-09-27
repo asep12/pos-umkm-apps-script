@@ -49,6 +49,9 @@ Role: `P` = publik (tanpa token), `K` = Kasir & Admin, `A` = Admin saja. Fase = 
 | `simpanItem(token, item)` | A | 1 | tanpa `ID` = baru → item tersimpan; catat Harga_Log bila harga berubah |
 | `setAktifItem(token, id, aktif)` | A | 1 | → item |
 | `ubahHargaMassal(token, {kategori, tipe, mode, nilai, bulat, pratinjau})` * | A | 4 | `mode` persen (−90..500) / nominal; `bulat` 0/100/500/1000 (ke atas); `pratinjau` = tidak menyimpan → `{perubahan:[{id, nama, kategori, lama, baru}], disimpan}`; tercatat di Harga_Log |
+| `imporItem(token, {teks, mode, buatBarcode, pratinjau})` * | A | 5 | `teks` = tabel tempel Excel/CSV (tab/`;`/`,`; baris 1 judul, maks 1000 baris; kolom dikenali lewat sinonim, **Nama** wajib). `mode` `tambah` (nama sudah ada dilewati) / `perbarui` (hanya kolom yang ada di tabel yang ditimpa). → `{disimpan, kolom, baru, diperbarui, dilewati, galat, laporan:[{baris, nama, aksi, pesan}]}`; perubahan harga ke Harga_Log, stok awal ke Stok_Log |
+| `ringkasPersediaan(token)` * | A | 5 | → `{nilai, jumlahItem, perKategori:[{kategori, nilai, jumlah}]}` = Σ stok × harga beli (item aktif, dilacak, bukan Menu, stok > 0) |
+| `labelItem(token, {ids, buatKode})` * | A | 5 | maks 300 ID → `[{id, nama, harga, satuan, kode, bits}]`; `bits` = 95 modul EAN-13 ("1"=batang) untuk digambar SVG; `buatKode` mengisi kolom Kode yang kosong dengan EAN-13 awalan 200 (di dalam kunci) |
 | `riwayatHarga(token, id)` | A | 2 | → `[{tanggal, hargaBeliLama, hargaBeliBaru, hargaJualLama, hargaJualBaru, user}]` terbaru dulu, maks 100 |
 | `getResep(token, idMenu)` | A | 1 | → `{baris:[{idBahan, nama, satuan, qty, hargaBeli}], hpp}` |
 | `simpanResep(token, idMenu, baris[])` | A | 1 | `[{idBahan, qty}]` → resep + HPP baru |

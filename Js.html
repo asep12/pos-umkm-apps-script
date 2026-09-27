@@ -1052,14 +1052,14 @@
   }
 
   /** Pilih apa yang dicetak lewat kelas body; CSS @media print menyembunyikan sisanya. */
-  function cetakDengan(mode) {
-    document.body.classList.remove('cetak-struk', 'cetak-laporan');
+  function cetakDengan(mode, gayaKertas) {
+    document.body.classList.remove('cetak-struk', 'cetak-laporan', 'cetak-label');
     document.body.classList.add('cetak-' + mode);
-    $('#gaya-kertas').textContent = mode === 'struk' ? S.gayaStruk : '@page { size: A4; margin: 12mm; }';
+    $('#gaya-kertas').textContent = gayaKertas || (mode === 'struk' ? S.gayaStruk : '@page { size: A4; margin: 12mm; }');
     // Beri waktu browser merender sebelum dialog cetak.
     setTimeout(() => window.print(), 60);
   }
-  window.addEventListener('afterprint', () => document.body.classList.remove('cetak-struk', 'cetak-laporan'));
+  window.addEventListener('afterprint', () => document.body.classList.remove('cetak-struk', 'cetak-laporan', 'cetak-label'));
 
   function cetakStruk(nota) {
     cetakTeksAtauHtml(nota.teks, isiStruk(nota));
@@ -1216,6 +1216,7 @@
     if (tab === 'opname') renderOpname();
     if (tab === 'riwayat') siapkanRiwayat();
     if (tab === 'menipis') tampilMenipis();
+    if (tab === 'persediaan') tampilPersediaan();
   }
   $$('#tab-stok button').forEach((b) => b.addEventListener('click', () => pilihTabStok(b.dataset.tab)));
 
@@ -2495,6 +2496,253 @@
         segarkanProduk(false);
       } catch (g) {
         tanganiGalat(g, $('#hm-pesan'));
+      }
+    });
+  });
+
+  // ======================================================================
+  // Menu "Alat" di layar Item
+  // ======================================================================
+  $('#tombol-alat-item').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = $('#menu-alat-item');
+    menu.hidden = !menu.hidden;
+    e.currentTarget.setAttribute('aria-expanded', String(!menu.hidden));
+  });
+  document.addEventListener('click', (e) => {
+    const menu = $('#menu-alat-item');
+    if (!menu.hidden && !menu.contains(e.target)) {
+      menu.hidden = true;
+      $('#tombol-alat-item').setAttribute('aria-expanded', 'false');
+    }
+  });
+  $('#menu-alat-item').addEventListener('click', () => { $('#menu-alat-item').hidden = true; });
+
+  // ======================================================================
+  // Impor item dari Excel / CSV
+  // ======================================================================
+  const imp = { mode: 'tambah', siap: false };
+  const JUDUL_TEMPLAT = ['Nama', 'Tipe', 'Kategori', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Stok Min', 'Kode', 'Lacak Stok'];
+
+  function bukaImpor() {
+    $('#form-impor').reset();
+    $('#im-pesan').textContent = '';
+    batalPratinjauImpor();
+    pilihModeImpor('tambah');
+    $('#modal-impor').hidden = false;
+    $('#im-teks').focus();
+  }
+
+  function pilihModeImpor(mode) {
+    imp.mode = mode;
+    $$('#im-mode button').forEach((b) => {
+      b.classList.toggle('aktif', b.dataset.mode === mode);
+      b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+    });
+    $('#im-ket-mode').textContent = mode === 'tambah'
+      ? 'Item yang namanya sudah ada dilewati.'
+      : 'Item yang namanya sudah ada diperbarui (hanya kolom yang ada di tabel). Stok tidak diubah — pakai Stok masuk/Opname.';
+    batalPratinjauImpor();
+  }
+
+  function batalPratinjauImpor() {
+    imp.siap = false;
+    $('#im-simpan').disabled = true;
+    $('#im-simpan').textContent = 'Impor';
+    $('#im-hasil').replaceChildren();
+    $('#im-ringkas').hidden = true;
+  }
+
+  function renderHasilImpor(r) {
+    $('#im-ringkas').hidden = false;
+    $('#im-ringkas').replaceChildren(
+      h('div', null, h('small', { text: 'Baru' }), h('b', { text: angka(r.baru) })),
+      h('div', null, h('small', { text: 'Diperbarui' }), h('b', { text: angka(r.diperbarui) })),
+      h('div', null, h('small', { text: 'Dilewati / galat' }), h('b', { text: angka(r.dilewati) + ' / ' + angka(r.galat) })));
+    $('#im-hasil').replaceChildren(r.laporan.length
+      ? tabelData([{ judul: 'Baris', kanan: true }, { judul: 'Nama' }, { judul: 'Aksi' }, { judul: 'Keterangan' }],
+        r.laporan.map((l) => [String(l.baris), l.nama || '—', l.aksi, l.pesan || '']))
+      : h('p', { class: 'bantu', style: 'margin:0', text: 'Tidak ada baris.' }));
+    $$('#im-hasil tbody tr').forEach((tr, i) => { if (r.laporan[i].aksi === 'Galat') tr.classList.add('baris-galat'); });
+  }
+
+  function dataImpor(pratinjau) {
+    return { teks: $('#im-teks').value, mode: imp.mode, buatBarcode: $('#im-barcode').checked, pratinjau: pratinjau };
+  }
+
+  $$('#im-mode button').forEach((b) => b.addEventListener('click', () => pilihModeImpor(b.dataset.mode)));
+  ['#im-teks', '#im-barcode'].forEach((sel) => $(sel).addEventListener('input', batalPratinjauImpor));
+  $('#tombol-impor').addEventListener('click', bukaImpor);
+  $('#tutup-impor').addEventListener('click', () => { $('#modal-impor').hidden = true; });
+  $('#im-salin-templat').addEventListener('click', async () => {
+    const teks = JUDUL_TEMPLAT.join('\t');
+    try {
+      await navigator.clipboard.writeText(teks);
+      toast('Judul kolom disalin. Tempel di baris 1 Excel/Sheets.', 'sukses');
+    } catch (e) {
+      // Clipboard bisa diblokir di iframe: taruh di kotak teks agar bisa disalin manual.
+      if (!$('#im-teks').value.trim()) $('#im-teks').value = teks + '\n';
+      toast('Judul kolom dimasukkan ke kotak data.', 'sukses');
+    }
+  });
+  $('#im-file').addEventListener('change', (e) => {
+    const berkas = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!berkas) return;
+    if (berkas.size > 500 * 1024) { $('#im-pesan').textContent = 'File terlalu besar (maks 500 KB).'; return; }
+    const baca = (enkode) => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result));
+      r.onerror = rej;
+      r.readAsText(berkas, enkode);
+    });
+    baca('utf-8').then((teks) => (teks.indexOf('�') !== -1 ? baca('windows-1252') : teks)).then((teks) => {
+      // CSV lama dari Excel Windows sering ber-enkode windows-1252: baca ulang bila ada karakter rusak.
+      $('#im-teks').value = teks;
+      batalPratinjauImpor();
+      toast('File "' + berkas.name + '" dimuat. Tekan Pratinjau.', 'sukses');
+    }).catch(() => { $('#im-pesan').textContent = 'Gagal membaca file.'; });
+  });
+
+  $('#im-pratinjau').addEventListener('click', (e) => {
+    const pesan = $('#im-pesan');
+    pesan.textContent = '';
+    if (!$('#im-teks').value.trim()) { pesan.textContent = 'Tempel data tabel atau pilih file CSV dulu.'; return; }
+    denganTombol(e.currentTarget, 'Memeriksa…', async () => {
+      try {
+        const r = await api('imporItem', dataImpor(true));
+        renderHasilImpor(r);
+        const jumlah = r.baru + r.diperbarui;
+        imp.siap = jumlah > 0;
+        $('#im-simpan').disabled = !imp.siap;
+        $('#im-simpan').textContent = jumlah ? 'Impor ' + jumlah + ' item' + (r.galat ? ' (lewati ' + r.galat + ' baris galat)' : '') : 'Tidak ada yang diimpor';
+      } catch (g) {
+        tanganiGalat(g, pesan);
+      }
+    });
+  });
+
+  $('#form-impor').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!imp.siap) return;
+    denganTombol(e.submitter || $('#im-simpan'), 'Mengimpor…', async () => {
+      try {
+        const r = await api('imporItem', dataImpor(false));
+        $('#modal-impor').hidden = true;
+        toast(r.baru + ' item baru, ' + r.diperbarui + ' diperbarui.', 'sukses');
+        S.semuaItem = null;
+        await pastikanSemuaItem();
+        renderFilterKategoriItem();
+        renderDaftarItem();
+        segarkanProduk(false);
+      } catch (g) {
+        tanganiGalat(g, $('#im-pesan'));
+      }
+    });
+  });
+
+  // ======================================================================
+  // Persediaan (tab di layar Stok)
+  // ======================================================================
+  async function tampilPersediaan() {
+    $('#ps-kpi').replaceChildren(...[1, 2, 3].map(() => h('div', { class: 'kpi' }, kerangkaMemuat(2))));
+    try {
+      const r = await api('ringkasPersediaan');
+      $('#ps-kpi').replaceChildren(
+        kartuKpi('Nilai persediaan', rupiah(r.nilai), 'modal yang tertahan di stok'),
+        kartuKpi('Item berstok', angka(r.jumlahItem), 'aktif & dilacak'),
+        kartuKpi('Kategori terbesar', r.perKategori[0] ? r.perKategori[0].kategori : '—', r.perKategori[0] ? rupiah(r.perKategori[0].nilai) : ''));
+      daftarBar($('#ps-kategori'), r.perKategori.map((k) => ({ nama: k.kategori, nilai: k.nilai, catatan: angka(k.jumlahItem) + ' item' })),
+        rupiah, 'Belum ada stok bernilai.');
+    } catch (g) {
+      $('#ps-kpi').replaceChildren(kosong((g && g.pesan) || 'Gagal memuat.'));
+    }
+  }
+
+  // ======================================================================
+  // Label harga & barcode
+  // ======================================================================
+  const lbl = { pilih: new Set() };
+
+  /** Pola 95 modul EAN-13 -> SVG. Batang penjaga (awal, tengah, akhir) lebih panjang seperti barcode cetak asli. */
+  function svgBarcode(bits, kode) {
+    const tepi = 9;
+    const lebar = bits.length + tepi * 2;
+    const penjaga = (i) => i < 3 || (i >= 45 && i < 50) || i >= 92;
+    const svg = sv('svg', { viewBox: '0 0 ' + lebar + ' 62', class: 'barcode', role: 'img', 'aria-label': 'Barcode ' + kode, preserveAspectRatio: 'none' });
+    for (let i = 0; i < bits.length; i++) {
+      if (bits[i] !== '1') continue;
+      let j = i;
+      while (j + 1 < bits.length && bits[j + 1] === '1' && penjaga(j + 1) === penjaga(i)) j++;
+      svg.append(sv('rect', { x: tepi + i, y: 0, width: j - i + 1, height: penjaga(i) ? 54 : 48, fill: '#000' }));
+      i = j;
+    }
+    svg.append(sv('text', { x: lebar / 2, y: 61, 'text-anchor': 'middle', 'font-size': 8, 'font-family': 'monospace', fill: '#000', text: kode }));
+    return svg;
+  }
+
+  async function bukaLabel() {
+    await pastikanSemuaItem();
+    const kategori = Array.from(new Set(S.semuaItem.filter((i) => i.tipe !== 'Bahan').map((i) => i.kategori).filter(Boolean))).sort();
+    $('#lb-kategori').replaceChildren(h('option', { value: '', text: 'Semua kategori' }), ...kategori.map((k) => h('option', { value: k, text: k })));
+    $('#lb-pesan').textContent = '';
+    renderDaftarLabel();
+    $('#modal-label').hidden = false;
+  }
+
+  const itemLabelTampil = () => {
+    const q = $('#lb-cari').value.trim().toLowerCase();
+    const kat = $('#lb-kategori').value;
+    return (S.semuaItem || []).filter((i) => i.aktif && i.tipe !== 'Bahan' && (!kat || i.kategori === kat) &&
+      (!q || (i.nama + ' ' + i.kode).toLowerCase().indexOf(q) !== -1));
+  };
+
+  function renderDaftarLabel() {
+    const daftar = itemLabelTampil();
+    isiWadah($('#lb-daftar'), daftar.length ? daftar.map((i) => h('label', { class: 'baris-label' },
+      h('input', { type: 'checkbox', checked: lbl.pilih.has(i.id), onchange: (e) => { if (e.target.checked) lbl.pilih.add(i.id); else lbl.pilih.delete(i.id); perbaruiTombolLabel(); } }),
+      h('span', { class: 'nama', text: i.nama }),
+      h('span', { class: 'kode', text: i.kode || 'tanpa kode' }),
+      h('b', { text: rupiah(i.hargaJual) })))
+      : [h('p', { class: 'bantu', style: 'margin:0', text: 'Tidak ada item.' })]);
+    perbaruiTombolLabel();
+  }
+
+  function perbaruiTombolLabel() {
+    const n = lbl.pilih.size;
+    $('#lb-cetak').disabled = !n;
+    $('#lb-cetak').textContent = n ? 'Cetak label (' + n + ' item)' : 'Cetak label';
+  }
+
+  $('#tombol-label').addEventListener('click', bukaLabel);
+  $('#tutup-label').addEventListener('click', () => { $('#modal-label').hidden = true; });
+  ['#lb-cari', '#lb-kategori'].forEach((sel) => $(sel).addEventListener('input', renderDaftarLabel));
+  $('#lb-pilih-semua').addEventListener('click', () => { itemLabelTampil().forEach((i) => lbl.pilih.add(i.id)); renderDaftarLabel(); });
+  $('#lb-kosongkan').addEventListener('click', () => { lbl.pilih.clear(); renderDaftarLabel(); });
+
+  $('#lb-cetak').addEventListener('click', (e) => {
+    const salinan = Math.min(Math.max(Math.floor(parseUang($('#lb-salinan').value)) || 1, 1), 50);
+    const ukuran = $('#lb-ukuran').value;
+    denganTombol(e.currentTarget, 'Menyiapkan…', async () => {
+      try {
+        const data = await api('labelItem', { ids: Array.from(lbl.pilih), buatKode: $('#lb-buat-kode').checked });
+        const wadah = $('#label-cetak');
+        wadah.className = 'label-cetak ' + ukuran;
+        const label = [];
+        data.forEach((d) => {
+          for (let n = 0; n < salinan; n++) {
+            label.push(h('div', { class: 'label' },
+              h('div', { class: 'l-nama', text: d.nama }),
+              h('div', { class: 'l-harga', text: rupiah(d.harga) }),
+              d.bits ? svgBarcode(d.bits, d.kode) : h('div', { class: 'l-kode', text: d.kode || '' })));
+          }
+        });
+        wadah.replaceChildren(...label);
+        $('#modal-label').hidden = true;
+        cetakDengan('label', ukuran === 'a4' ? '@page { size: A4; margin: 8mm; }' : '@page { margin: 0; }');
+        if (data.some((d) => d.kode) && $('#lb-buat-kode').checked) { S.semuaItem = null; segarkanProduk(false); }
+      } catch (g) {
+        tanganiGalat(g, $('#lb-pesan'));
       }
     });
   });

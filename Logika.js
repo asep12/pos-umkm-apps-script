@@ -546,6 +546,140 @@ function rekapTeks_(r, kolom) {
   return baris;
 }
 
+// ---------- Impor item (tempel dari Excel / CSV) ----------
+
+const MAKS_BARIS_IMPOR = 1000;
+
+/** Angka format Indonesia/Excel: "17.000", "Rp 17.000", "1,5", "1.000,25", "17000" -> Number (NaN bila bukan angka). */
+function angkaIndonesia_(v) {
+  if (typeof v === 'number') return v;
+  let s = String(v === null || v === undefined ? '' : v).replace(/rp/ig, '').replace(/\s/g, '');
+  if (!s) return NaN;
+  if (s.indexOf(',') !== -1) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/**
+ * Teks tabel -> {header, baris}. Pemisah dideteksi dari baris judul: tab (tempel dari Excel/Sheets), ";" (CSV Excel
+ * Indonesia), atau ",". Mendukung sel berkutip ("a, b" dan "" untuk kutip). Baris kosong dibuang.
+ */
+function parseTabelTeks_(teks) {
+  const t = String(teks || '').replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+  const pertama = t.split('\n')[0] || '';
+  const hitung = function (c) { return pertama.split(c).length - 1; };
+  const pemisah = hitung('\t') ? '\t' : hitung(';') >= hitung(',') && hitung(';') ? ';' : ',';
+  const baris = [];
+  let sel = '';
+  let kini = [];
+  let dalamKutip = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (dalamKutip) {
+      if (c === '"' && t[i + 1] === '"') { sel += '"'; i++; } else if (c === '"') dalamKutip = false; else sel += c;
+    } else if (c === '"' && sel === '') dalamKutip = true;
+    else if (c === pemisah) { kini.push(sel); sel = ''; }
+    else if (c === '\n') { kini.push(sel); baris.push(kini); kini = []; sel = ''; }
+    else sel += c;
+  }
+  if (sel !== '' || kini.length) { kini.push(sel); baris.push(kini); }
+  const bersih = baris.map(function (r) { return r.map(function (x) { return String(x).trim(); }); })
+    .filter(function (r) { return r.some(function (x) { return x !== ''; }); });
+  return { pemisah: pemisah, header: bersih[0] || [], baris: bersih.slice(1) };
+}
+
+/** Cocokkan judul kolom bebas ke field item. Nama wajib ada. */
+function petaKolomImpor_(header) {
+  const sinonim = {
+    nama: ['nama', 'nama item', 'nama barang', 'nama produk', 'produk', 'barang', 'item'],
+    tipe: ['tipe', 'jenis', 'type'],
+    kategori: ['kategori', 'kelompok', 'golongan', 'category'],
+    satuan: ['satuan', 'unit', 'uom'],
+    hargaBeli: ['harga beli', 'hpp', 'modal', 'harga modal', 'hb', 'harga pokok'],
+    hargaJual: ['harga jual', 'harga', 'hj', 'harga ecer', 'price'],
+    stokAwal: ['stok', 'stok awal', 'qty', 'jumlah', 'stock'],
+    stokMin: ['stok min', 'stok minimum', 'minimum', 'min stok', 'batas stok'],
+    kode: ['kode', 'barcode', 'sku', 'kode barang', 'plu'],
+    lacak: ['lacak stok', 'lacak', 'track'],
+  };
+  const peta = {};
+  header.forEach(function (h, i) {
+    const k = String(h).toLowerCase().replace(/[_*:]/g, ' ').replace(/\s+/g, ' ').trim();
+    Object.keys(sinonim).forEach(function (f) {
+      if (peta[f] === undefined && sinonim[f].indexOf(k) !== -1) peta[f] = i;
+    });
+  });
+  if (peta.nama === undefined) throw galat_('VALIDASI', 'Kolom "Nama" tidak ditemukan di baris judul.');
+  return peta;
+}
+
+/** Satu baris tabel -> input untuk normalisasiItem_ (Tipe bawaan Barang, Lacak bawaan Ya). */
+function barisImporKeItem_(r, peta) {
+  const ambil = function (f) { return peta[f] === undefined ? '' : String(r[peta[f]] === undefined ? '' : r[peta[f]]).trim(); };
+  const angka = function (f, nama) {
+    const s = ambil(f);
+    if (!s) return '';
+    const n = angkaIndonesia_(s);
+    if (!Number.isFinite(n)) throw galat_('VALIDASI', nama + ' "' + s + '" bukan angka.');
+    return n;
+  };
+  const tipeMentah = ambil('tipe').toLowerCase();
+  const tipe = !tipeMentah ? 'Barang' : tipeMentah.charAt(0).toUpperCase() + tipeMentah.slice(1);
+  const lacak = ambil('lacak').toLowerCase();
+  return {
+    nama: ambil('nama'), tipe: tipe, kategori: ambil('kategori'), satuan: ambil('satuan'), kode: ambil('kode'),
+    hargaBeli: angka('hargaBeli', 'Harga beli'), hargaJual: angka('hargaJual', 'Harga jual'),
+    stokAwal: angka('stokAwal', 'Stok'), stokMin: angka('stokMin', 'Stok min'),
+    lacak: !lacak || ['ya', 'y', 'yes', '1', 'true'].indexOf(lacak) !== -1,
+  };
+}
+
+// ---------- Persediaan ----------
+
+/** Nilai persediaan = stok × harga beli untuk item aktif yang dilacak & punya stok (Menu tidak punya stok). */
+function hitungPersediaan_(items) {
+  const r = { nilai: 0, jumlahItem: 0, perKategori: [] };
+  const peta = {};
+  items.forEach(function (i) {
+    if (!i.aktif || !i.lacak || i.tipe === 'Menu' || !(i.stok > 0)) return;
+    const nilai = bulatUang_(i.stok * i.hargaBeli);
+    r.nilai += nilai;
+    r.jumlahItem++;
+    const k = i.kategori || 'Tanpa kategori';
+    if (!peta[k]) { peta[k] = { kategori: k, nilai: 0, jumlahItem: 0 }; r.perKategori.push(peta[k]); }
+    peta[k].nilai += nilai;
+    peta[k].jumlahItem++;
+  });
+  r.perKategori.sort(function (a, b) { return b.nilai - a.nilai; });
+  return r;
+}
+
+// ---------- Barcode EAN-13 (pola batang untuk label) ----------
+
+/** 13 digit -> 95 modul ("1" = batang hitam). Melempar VALIDASI bila digit cek salah. */
+function ean13Bits_(kode) {
+  const d = String(kode || '');
+  if (!/^\d{13}$/.test(d) || ean13_(d.slice(0, 12)) !== d) throw galat_('VALIDASI', 'Kode ' + d + ' bukan EAN-13 yang valid.');
+  const L = ['0001101', '0011001', '0010011', '0111101', '0100011', '0110001', '0101111', '0111011', '0110111', '0001011'];
+  const G = ['0100111', '0110011', '0011011', '0100001', '0011101', '0111001', '0000101', '0010001', '0001001', '0010111'];
+  const R = ['1110010', '1100110', '1101100', '1000010', '1011100', '1001110', '1010000', '1000100', '1001000', '1110100'];
+  const PARITAS = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+  const pola = PARITAS[Number(d[0])];
+  let bit = '101';
+  for (let i = 1; i <= 6; i++) bit += (pola[i - 1] === 'L' ? L : G)[Number(d[i])];
+  bit += '01010';
+  for (let i = 7; i <= 12; i++) bit += R[Number(d[i])];
+  return bit + '101';
+}
+
+/** Barcode otomatis stabil dari ID item: ITM-0057 -> 200 000000057 + cek. */
+function kodeDariIdItem_(id) {
+  const m = /^ITM-(\d+)$/.exec(String(id));
+  if (!m || m[1].length > 9) return '';
+  return ean13_('200' + m[1].padStart(9, '0'));
+}
+
 // ---------- Harga massal ----------
 
 /**

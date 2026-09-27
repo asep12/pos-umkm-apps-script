@@ -209,7 +209,14 @@
             </select>
           </div>
           <div class="aksi-item">
-            <button id="tombol-harga-massal" class="tombol" type="button">Ubah harga massal</button>
+            <div class="bungkus-alat">
+              <button id="tombol-alat-item" class="tombol" type="button" aria-haspopup="true" aria-expanded="false">Alat ▾</button>
+              <div id="menu-alat-item" class="menu-akun menu-alat" hidden>
+                <button id="tombol-impor" type="button">Impor dari Excel / CSV</button>
+                <button id="tombol-harga-massal" type="button">Ubah harga massal</button>
+                <button id="tombol-label" type="button">Cetak label harga &amp; barcode</button>
+              </div>
+            </div>
             <button id="tombol-item-baru" class="tombol utama" type="button">+ Item</button>
           </div>
         </div>
@@ -285,6 +292,7 @@
           <button type="button" data-tab="opname">Opname</button>
           <button type="button" data-tab="riwayat">Riwayat</button>
           <button type="button" data-tab="menipis">Menipis <span id="badge-menipis-tab" class="lencana-angka" hidden></span></button>
+          <button type="button" data-tab="persediaan">Persediaan</button>
         </div>
 
         <div data-tab-isi="masuk">
@@ -337,6 +345,14 @@
 
         <div data-tab-isi="menipis" hidden>
           <div id="daftar-menipis" class="tumpuk"></div>
+        </div>
+
+        <div data-tab-isi="persediaan" hidden>
+          <div id="ps-kpi" class="kpi-grid"></div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Nilai persediaan per kategori</h2><small>stok × harga beli</small></div>
+            <div id="ps-kategori" class="daftar-bar"></div>
+          </div>
         </div>
       </section>
 
@@ -728,6 +744,63 @@
       <p id="hm-pesan" class="pesan-galat" role="alert"></p>
     </form>
   </div>
+
+  <!-- ================= MODAL IMPOR ITEM ================= -->
+  <div id="modal-impor" class="modal" hidden>
+    <form id="form-impor" class="isi-modal lebar" role="dialog" aria-modal="true" aria-labelledby="judul-impor" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-impor">Impor item dari Excel / CSV</h2>
+        <button id="tutup-impor" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <p class="bantu" style="margin-top:0">Salin tabel dari Excel/Google Sheets (termasuk baris judul) lalu tempel di bawah, atau pilih file CSV.
+        Kolom yang dikenali: <b>Nama</b> (wajib), Tipe, Kategori, Satuan, Harga Beli, Harga Jual, Stok, Stok Min, Kode/Barcode, Lacak Stok.</p>
+      <div class="aksi-form" style="margin-bottom:10px">
+        <button id="im-salin-templat" class="tombol kecil" type="button">Salin judul kolom templat</button>
+        <label class="tombol kecil">Pilih file CSV<input id="im-file" type="file" accept=".csv,.txt,text/csv,text/plain" class="sr-only"></label>
+      </div>
+      <label>Data tabel <textarea id="im-teks" rows="7" placeholder="Nama&#9;Kategori&#9;Harga Beli&#9;Harga Jual&#9;Stok&#10;Gula Pasir 1 kg&#9;Sembako&#9;14.500&#9;17.000&#9;20"></textarea></label>
+      <div id="im-mode" class="segmen dua" role="group" aria-label="Item yang sudah ada">
+        <button type="button" data-mode="tambah">Hanya tambah baru</button>
+        <button type="button" data-mode="perbarui">Tambah &amp; perbarui</button>
+      </div>
+      <p id="im-ket-mode" class="bantu"></p>
+      <label class="centang"><input id="im-barcode" type="checkbox" checked> Buat barcode otomatis untuk Barang tanpa kode</label>
+      <button id="im-pratinjau" class="tombol besar" type="button">Pratinjau</button>
+      <div id="im-ringkas" class="ringkas-nota" style="margin-top:12px" hidden></div>
+      <div id="im-hasil" class="tabel-gulung hasil-harga"></div>
+      <button id="im-simpan" class="tombol utama besar" type="submit" disabled>Impor</button>
+      <p id="im-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+
+  <!-- ================= MODAL LABEL ================= -->
+  <div id="modal-label" class="modal" hidden>
+    <div class="isi-modal lebar" role="dialog" aria-modal="true" aria-labelledby="judul-label">
+      <div class="kepala-modal">
+        <h2 id="judul-label">Cetak label harga &amp; barcode</h2>
+        <button id="tutup-label" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="dua-kolom">
+        <input id="lb-cari" type="search" placeholder="Cari item…" aria-label="Cari item">
+        <select id="lb-kategori" aria-label="Kategori"></select>
+      </div>
+      <div class="aksi-form" style="margin-bottom:8px">
+        <button id="lb-pilih-semua" class="tombol kecil" type="button">Pilih semua yang tampil</button>
+        <button id="lb-kosongkan" class="tombol kecil" type="button">Kosongkan pilihan</button>
+      </div>
+      <div id="lb-daftar" class="daftar-label"></div>
+      <div class="dua-kolom" style="margin-top:12px">
+        <label>Ukuran
+          <select id="lb-ukuran"><option value="a4">Stiker A4 (3 kolom)</option><option value="thermal">Printer thermal (1 kolom)</option></select>
+        </label>
+        <label>Salinan per item <input id="lb-salinan" inputmode="numeric" value="1"></label>
+      </div>
+      <label class="centang"><input id="lb-buat-kode" type="checkbox" checked> Buat barcode untuk item yang belum punya</label>
+      <button id="lb-cetak" class="tombol utama besar" type="button">Cetak label</button>
+      <p id="lb-pesan" class="pesan-galat" role="alert"></p>
+    </div>
+  </div>
+  <div id="label-cetak" class="label-cetak" aria-hidden="true"></div>
 
   <datalist id="daftar-kategori"></datalist>
   <datalist id="daftar-satuan">

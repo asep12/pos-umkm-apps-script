@@ -702,6 +702,23 @@
   .kredit a, #info-versi a { color: var(--utama); font-weight: 600; text-decoration: none; }
   .kredit a:hover, #info-versi a:hover { text-decoration: underline; }
 
+  /* ---------- Impor, menu alat, label ---------- */
+  .bungkus-alat { position: relative; }
+  .menu-alat { top: calc(100% + 6px); right: 0; left: auto; min-width: 250px; }
+  textarea { width: 100%; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; line-height: 1.4; }
+  .tabel-data tr.baris-galat td { color: var(--bahaya-teks); }
+  .daftar-label { max-height: 40vh; overflow-y: auto; border: 1px solid var(--garis); border-radius: 12px; }
+  .baris-label {
+    display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+    padding: 10px 12px; margin: 0; border-bottom: 1px solid var(--garis); color: var(--teks); font-weight: 500; font-size: 14px; cursor: pointer;
+  }
+  .baris-label:last-child { border-bottom: none; }
+  .baris-label input { width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--utama); }
+  .baris-label .nama { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .baris-label .kode { font-size: 12px; color: var(--teks-redup); font-family: ui-monospace, Consolas, monospace; }
+  @media (max-width: 520px) { .baris-label .kode { display: none; } .baris-label { grid-template-columns: 22px minmax(0, 1fr) auto; } }
+  .label-cetak { display: none; }
+
   /* ---------- Toast & memuat ---------- */
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%); z-index: 90; max-width: calc(100% - 24px);
@@ -748,5 +765,21 @@
     body.cetak-laporan .judul-cetak { display: block; margin-bottom: 10px; }
     body.cetak-laporan .kartu, body.cetak-laporan .kpi { box-shadow: none; border-color: #ccc; background: #fff; break-inside: avoid; }
     body.cetak-laporan .grafik .g-batang { fill: #444; }
+
+    /* Label harga & barcode: A4 = stiker 3 kolom (±63 × 38 mm), thermal = 1 kolom 48 mm. */
+    body.cetak-label > *:not(#label-cetak) { display: none !important; }
+    body.cetak-label #label-cetak { display: grid !important; color: #000; }
+    #label-cetak.a4 { grid-template-columns: repeat(3, 1fr); }
+    #label-cetak.thermal { grid-template-columns: 1fr; width: 48mm; margin: 0 5mm; }
+    #label-cetak .label {
+      break-inside: avoid; text-align: center; padding: 2.5mm 3mm; border: .2mm dashed #bbb; overflow: hidden;
+      font-family: Arial, sans-serif; display: flex; flex-direction: column; justify-content: center; gap: 1mm;
+    }
+    #label-cetak.a4 .label { height: 38mm; }
+    #label-cetak.thermal .label { border-width: 0 0 .2mm; padding: 3mm 0; }
+    #label-cetak .l-nama { font-size: 9pt; line-height: 1.2; max-height: 2.4em; overflow: hidden; }
+    #label-cetak .l-harga { font-size: 15pt; font-weight: 700; }
+    #label-cetak .l-kode { font-size: 9pt; font-family: monospace; }
+    #label-cetak .barcode { width: 100%; height: 15mm; }
   }
 </style>

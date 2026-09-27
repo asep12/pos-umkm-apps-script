@@ -138,5 +138,19 @@ Terverifikasi di emulator (`node dev/uji-e2e.js`, total 52 skenario) dan UI loka
 - [x] Harga massal: pratinjau tidak menyimpan; simpan tercatat di Harga_Log; Bahan/nonaktif tak tersentuh; khusus Admin.
 - [x] Bill: tidak memotong stok, bisa diubah, konflik versi terdeteksi, bayar menutup bill & memotong stok, bisa dibatalkan.
 
+## 5d. Fitur tambahan — impor, persediaan, label (selesai, v1.5.0)
+- **Backend**: `imporItem` (pratinjau/simpan, mode tambah/perbarui, barcode otomatis), `ringkasPersediaan`, `labelItem`;
+  `parseTabelTeks_`, `petaKolomImpor_`, `barisImporKeItem_`, `angkaIndonesia_`, `hitungPersediaan_`, `ean13Bits_` (+ tes);
+  `tulisSemuaBaris_` di Db.js (tulis ulang tabel sekali panggil, teks tetap dilindungi).
+- **Frontend**: menu "Alat" di layar Item (impor, harga massal, label); modal impor (tempel/berkas CSV, salin templat, laporan per baris);
+  tab Stok › Persediaan; modal label (cari/kategori, salinan, stiker A4 3 kolom atau thermal) dengan barcode SVG.
+
+### Kriteria selesai
+Terverifikasi di emulator (`node dev/uji-e2e.js`, total 57 skenario) dan UI lokal (desktop & HP).
+- [x] Impor: pratinjau tidak menyimpan; baris galat dilewati dengan alasan; nama ganda dilewati (mode tambah).
+- [x] Mode perbarui hanya menimpa kolom yang ada di tabel; kode "00123" & teks "=..." tetap teks setelah tulis ulang.
+- [x] Nilai persediaan = Σ stok × harga beli; Menu & item tak dilacak tidak dihitung.
+- [x] Label: barcode EAN-13 valid (30 batang), kode baru tersimpan ke kolom Kode.
+
 ## 6. Fase Berikutnya (ringkas)
 - **Fase 4** (opsional): scanner kamera, RawBT, varian/topping, satuan konversi, bill terbuka, offline ringan, arsip tahunan.

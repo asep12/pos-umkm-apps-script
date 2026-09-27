@@ -3,7 +3,7 @@
  * Kolom dipetakan berdasarkan nama header, bukan nomor kolom.
  */
 
-const VERSI = '1.4.0';
+const VERSI = '1.5.0';
 
 const SHEET = Object.freeze({
   ITEM: 'Item',
@@ -142,6 +142,19 @@ function tulisKolom_(tabel, namaKolom, nilaiPerBaris) {
   tabel.sheet
     .getRange(2, tabel.kol[namaKolom] + 1, nilaiPerBaris.length, 1)
     .setValues(nilaiPerBaris.map(function (v) { return [v]; }));
+}
+
+/**
+ * Tulis ulang semua baris data dalam satu setValues. `tabel.baris` harus berisi nilai MENTAH (seperti hasil getValues,
+ * tanpa apostrof): semua teks dilindungi amanSel_ tepat sekali di sini.
+ */
+function tulisSemuaBaris_(tabel) {
+  if (!tabel.baris.length) return;
+  tabel.sheet.getRange(2, 1, tabel.baris.length, tabel.lebar).setValues(tabel.baris.map(function (r) {
+    const row = r.slice(0, tabel.lebar);
+    while (row.length < tabel.lebar) row.push('');
+    return row.map(function (v) { return typeof v === 'string' ? amanSel_(v) : v; });
+  }));
 }
 
 /** Ganti seluruh isi data (tanpa header). Dipakai untuk tabel kecil seperti Resep. */

@@ -658,6 +658,77 @@ uji('[F4b] Bill terbuka: simpan tanpa potong stok, ubah, konflik versi, bayar me
   sama(barisData('Bill').find((r) => r[0] === c.id)[kolom('Bill', 'Status')], 'Batal');
 });
 
+// ======================= IMPOR, PERSEDIAAN, LABEL =======================
+uji('[F5] Impor item: pratinjau per baris (baru/lewati/galat) tanpa menyimpan', () => {
+  const jumlah = barisData('Item').length;
+  const teks = 'Nama Barang;Kategori;HPP;Harga;Stok;Barcode\n' +
+    'Sarden Kaleng 155 g;Makanan;8.500;11.000;12;\n' +
+    'Gula Pasir 1 kg;Sembako;14.500;17.000;5;\n' +
+    'Kerupuk Udang;Makanan Ringan;mahal;5.000;3;\n' +
+    'Sarden Kaleng 155 g;Makanan;8.500;11.000;1;\n' +
+    'Susu Bubuk 400 g;Minuman;42.000;49.500;6;2000000000213\n';
+  const r = ok(api('imporItem', token, { teks, pratinjau: true, buatBarcode: true }));
+  sama([r.disimpan, r.baru, r.dilewati, r.galat], [false, 1, 2, 2]);
+  sama(r.laporan.map((l) => l.baris + ':' + l.aksi), ['2:Baru', '3:Lewati', '4:Galat', '5:Lewati', '6:Galat']);
+  pastikan(r.laporan[4].pesan.includes('sudah dipakai'), 'barcode bentrok terdeteksi');
+  sama(barisData('Item').length, jumlah, 'pratinjau tidak menyimpan');
+  galat(api('imporItem', tokenSiti, { teks }), 'AKSES_DITOLAK');
+  galat(api('imporItem', token, { teks: 'Harga;Stok\n1;2' }), 'VALIDASI');
+});
+
+uji('[F5] Impor item: simpan dengan barcode otomatis + stok awal tercatat', () => {
+  const jumlah = barisData('Item').length;
+  const teks = 'Nama\tKategori\tHarga Beli\tHarga Jual\tStok\tSatuan\n' +
+    'Sarden Kaleng 155 g\tMakanan\t8.500\t11.000\t12\tkaleng\n' +
+    'Lilin Batang\tRumah Tangga\t1.000\t2.000\t0\tpcs\n';
+  const r = ok(api('imporItem', token, { teks, buatBarcode: true }));
+  sama([r.disimpan, r.baru], [true, 2]);
+  sama(barisData('Item').length, jumlah + 2);
+  const sarden = barisData('Item').find((x) => x[kolom('Item', 'Nama')] === 'Sarden Kaleng 155 g');
+  sama(String(sarden[kolom('Item', 'Kode')]), P.jalankan("kodeDariIdItem_('" + sarden[0] + "')"), 'barcode dari ID');
+  sama([sarden[kolom('Item', 'Stok')], sarden[kolom('Item', 'Satuan')]], [12, 'kaleng']);
+  sama(logStok(sarden[0], 'Masuk').length, 1);
+  pastikan(ok(api('muatAwal', tokenSiti)).items.some((i) => i.nama === 'Lilin Batang'), 'langsung tampil di kasir');
+});
+
+uji('[F5] Impor mode perbarui: hanya kolom yang ada di file; teks khusus tetap utuh setelah tulis ulang', () => {
+  const sebelum = barisData('Item').find((x) => x[kolom('Item', 'Nama')] === 'Sarden Kaleng 155 g');
+  const log = barisData('Harga_Log').length;
+  const r = ok(api('imporItem', token, { teks: 'Nama,Harga Jual\nSarden Kaleng 155 g,12.500\n', mode: 'perbarui' }));
+  sama([r.diperbarui, r.baru], [1, 0]);
+  const sesudah = barisData('Item').find((x) => x[kolom('Item', 'Nama')] === 'Sarden Kaleng 155 g');
+  sama(sesudah[kolom('Item', 'Harga Jual')], 12500);
+  sama([sesudah[kolom('Item', 'Harga Beli')], sesudah[kolom('Item', 'Satuan')], sesudah[kolom('Item', 'Stok')], String(sesudah[kolom('Item', 'Kode')])],
+    [sebelum[kolom('Item', 'Harga Beli')], 'kaleng', sebelum[kolom('Item', 'Stok')], String(sebelum[kolom('Item', 'Kode')])], 'kolom lain tidak tersentuh');
+  sama(barisData('Harga_Log').length - log, 1);
+  // Seluruh tabel Item baru saja ditulis ulang: kode berawalan 0 & teks "=..." harus tetap teks apa adanya.
+  const khusus = barisData('Item').find((x) => String(x[kolom('Item', 'Nama')]).startsWith('=IMPORTXML'));
+  sama(String(khusus[kolom('Item', 'Kode')]), '00123');
+  sama(typeof khusus[kolom('Item', 'Kode')], 'string');
+});
+
+uji('[F5] Nilai persediaan = Σ stok × harga beli (aktif, dilacak, bukan Menu)', () => {
+  const k = (n) => kolom('Item', n);
+  const manual = barisData('Item').filter((x) => x[k('Aktif')] === 'Ya' && x[k('Lacak Stok')] === 'Ya' && x[k('Tipe')] !== 'Menu' && x[k('Stok')] > 0)
+    .reduce((s, x) => s + Math.round(x[k('Stok')] * x[k('Harga Beli')]), 0);
+  const r = ok(api('ringkasPersediaan', token));
+  sama(r.nilai, manual);
+  sama(r.perKategori.reduce((s, x) => s + x.nilai, 0), manual, 'jumlah per kategori');
+  galat(api('ringkasPersediaan', tokenSiti), 'AKSES_DITOLAK');
+});
+
+uji('[F5] Label: barcode otomatis untuk item tanpa kode, pola 95 modul; kode non-EAN tanpa pola', () => {
+  const lilin = barisData('Item').find((x) => x[kolom('Item', 'Nama')] === 'Lilin Batang');
+  const menu = barisData('Item').find((x) => x[kolom('Item', 'Nama')] === 'Kopi Hitam');
+  const khusus = barisData('Item').find((x) => String(x[kolom('Item', 'Nama')]).startsWith('=IMPORTXML'));
+  const r = ok(api('labelItem', token, { ids: [lilin[0], menu[0], khusus[0]], buatKode: true }));
+  pastikan(r[0].kode && r[0].bits.length === 95, 'lilin punya barcode');
+  pastikan(/^200\d{10}$/.test(r[1].kode) && r[1].bits.length === 95, 'menu dibuatkan barcode');
+  sama([r[2].kode, r[2].bits], ['00123', null]);
+  sama(String(barisData('Item').find((x) => x[0] === menu[0])[kolom('Item', 'Kode')]), r[1].kode, 'tersimpan');
+  galat(api('labelItem', tokenSiti, { ids: [lilin[0]] }), 'AKSES_DITOLAK');
+});
+
 /** Token kasir kedua (dibuat sekali) untuk uji akses lintas kasir. */
 function tokenKasirLain() {
   if (tokenKasirLain.t) return tokenKasirLain.t;

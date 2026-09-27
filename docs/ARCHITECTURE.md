@@ -30,7 +30,7 @@
 | `Contoh.js` | `katalogContoh_` (±55 item + resep), `isiContohData_` | Idempoten per nama; barcode EAN-13 awalan 200 |
 | `Auth.js` | `login`, `logout`, `infoSesi`, `gantiPin`, hash PIN, batas percobaan | |
 | `Pengaturan.js` | `getPengaturan`, `simpanPengaturan`, `listPengguna`, `simpanPengguna` | Dipisah dari Code.js agar Code.js ramping |
-| `Item.js` | `listItem`, `simpanItem`, `setAktifItem`, `riwayatHarga`, `muatAwal` | |
+| `Item.js` | `listItem`, `simpanItem`, `setAktifItem`, `riwayatHarga`, `muatAwal`, `ubahHargaMassal`, `imporItem`, `ringkasPersediaan`, `labelItem` | |
 | `Resep.js` | `getResep`, `simpanResep`, hitung ulang HPP menu | |
 | `Stok.js` | `stokMasuk`, `opname`, `listStokLog`, `listStokMenipis` | Fase 2 |
 | `Transaksi.js` | `buatTransaksi`, `getNota`, `listTransaksi`, `voidTransaksi`, nomor nota | Void mengembalikan stok dari baris `Jual` di Stok_Log |
