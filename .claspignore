@@ -1,0 +1,8 @@
+docs/**
+scripts/**
+dev/**
+.claude/**
+node_modules/**
+**/*.md
+toko.local.json
+*.example

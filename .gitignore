@@ -1,0 +1,16 @@
+# Identitas proyek Apps Script milik masing-masing toko (pakai .clasp.json.example)
+.clasp.json
+.clasp.json.bak
+.clasprc.json
+toko.local.json
+
+# Pengaturan lokal & alat pihak ketiga (tidak ikut dibagikan)
+.claude/settings.local.json
+.claude/skills/
+design-system/
+
+# Umum
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

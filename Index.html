@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
+  <?!= include('Css'); ?>
+  <!-- Diisi JS sesuai LEBAR_STRUK (hanya angka 58/80). -->
+  <style id="gaya-kertas"></style>
+</head>
+<body>
+
+  <!-- ================= LOGIN ================= -->
+  <section id="layar-login" class="layar-auth" hidden>
+    <form id="form-login" class="kartu-auth" novalidate>
+      <span class="logo-mark" aria-hidden="true">K</span>
+      <h1>Masuk</h1>
+      <!-- Tag print template meng-escape HTML: aman untuk nama toko. -->
+      <p class="sub"><?= namaToko ?></p>
+      <label>Username
+        <input id="login-username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="50" required>
+      </label>
+      <label>PIN
+        <input id="login-pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" required>
+      </label>
+      <button class="tombol utama besar" type="submit">Masuk</button>
+      <p id="login-pesan" class="pesan-galat" role="alert"></p>
+      <p class="kredit">Dibuat oleh <a href="https://www.threads.net/@asep94" target="_blank" rel="noopener">@asep94</a> · Threads</p>
+    </form>
+  </section>
+
+  <!-- ================= GANTI PIN ================= -->
+  <section id="layar-pin" class="layar-auth" hidden>
+    <form id="form-pin" class="kartu-auth" novalidate>
+      <h1>Ganti PIN</h1>
+      <p id="pin-info" class="sub"></p>
+      <label>PIN lama
+        <input id="pin-lama" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" required>
+      </label>
+      <label>PIN baru (4–6 digit)
+        <input id="pin-baru" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6" required>
+      </label>
+      <p class="bantu">Hindari angka sama atau berurutan (mis. 1111, 123456).</p>
+      <label>Ulangi PIN baru
+        <input id="pin-ulang" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6" required>
+      </label>
+      <button class="tombol utama besar" type="submit">Simpan PIN</button>
+      <button id="pin-batal" class="tombol teks" type="button">Batal</button>
+      <p id="pin-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- ================= APLIKASI ================= -->
+  <div id="aplikasi" class="kerangka" hidden>
+    <aside class="sidebar" aria-label="Menu utama">
+      <div class="sb-merek">
+        <span class="logo-mark" aria-hidden="true">K</span>
+        <span class="sb-teks"><b id="sb-nama-toko"></b><small>Aplikasi Kasir</small></span>
+      </div>
+      <nav id="nav-samping" class="nav-samping"></nav>
+      <div class="sb-bawah">
+        <div class="sb-akun">
+          <span id="sb-avatar" class="avatar"></span>
+          <span class="detail"><b id="sb-nama"></b><small id="sb-role"></small></span>
+        </div>
+        <button id="sb-keluar" class="sb-keluar" type="button" title="Keluar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span>Keluar</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="kolom-utama">
+    <header class="topbar">
+      <div class="topbar-kiri">
+        <span class="logo-mark" aria-hidden="true">K</span>
+        <div style="min-width:0">
+          <div id="judul-layar" class="judul-layar"></div>
+          <div id="sub-layar" class="sub-layar"></div>
+        </div>
+      </div>
+      <div class="topbar-kanan">
+        <button id="chip-shift" class="chip-shift" type="button" hidden></button>
+        <span id="jam-toko" class="jam-toko"></span>
+        <button id="tombol-akun" class="tombol-akun" type="button" aria-haspopup="true">
+          <span id="akun-avatar" class="avatar"></span><span id="akun-label" class="nama"></span>
+        </button>
+      </div>
+      <div id="menu-akun" class="menu-akun" hidden>
+        <div class="info"><b id="akun-nama"></b><span id="akun-role"></span></div>
+        <button type="button" data-aksi="muat-ulang">Muat ulang data</button>
+        <button type="button" data-aksi="printer">Printer struk</button>
+        <button type="button" data-aksi="ganti-pin">Ganti PIN</button>
+        <button type="button" data-aksi="keluar">Keluar</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ---------- DASHBOARD (Admin) ---------- -->
+      <section data-layar="dashboard" class="layar" hidden>
+        <div class="sapaan">
+          <h1 id="db-sapaan"></h1>
+          <p id="db-tanggal"></p>
+        </div>
+        <div id="db-mulai"></div>
+        <div id="db-kpi" class="kpi-grid"></div>
+        <div class="grid-dasbor">
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Penjualan 7 hari</h2><small>arahkan/ketuk batang untuk detail</small></div>
+            <div id="db-grafik-7" class="grafik"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Metode bayar hari ini</h2></div>
+            <div id="db-metode" class="daftar-bar"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Jam ramai</h2><small>jumlah transaksi, 7 hari</small></div>
+            <div id="db-grafik-jam" class="grafik"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Terlaris 7 hari</h2><small>qty terjual</small></div>
+            <div id="db-terlaris" class="daftar-bar"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Stok menipis</h2><button id="db-ke-stok" class="tombol teks kecil" type="button">Lihat semua</button></div>
+            <div id="db-menipis" class="tumpuk"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Transaksi terakhir</h2><button id="db-ke-nota" class="tombol teks kecil" type="button">Semua nota</button></div>
+            <div id="db-terakhir" class="tumpuk"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- KASIR ---------- -->
+      <section data-layar="kasir" class="layar-kasir">
+        <div class="panel-produk">
+          <div id="banner-shift" class="banner" role="status" hidden>
+            <span>Kasir belum dibuka. Buka shift dulu sebelum berjualan.</span>
+            <button id="banner-buka" class="tombol kecil utama" type="button">Buka kasir</button>
+          </div>
+          <div class="bilah-cari baris-cari">
+            <div class="kotak-cari">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="cari-produk" type="search" placeholder="Cari nama atau scan kode…" autocomplete="off" enterkeyhint="search" aria-label="Cari produk">
+              <kbd class="hanya-desktop">F2</kbd>
+            </div>
+            <button id="tombol-kamera" class="tombol ikon tombol-alat" type="button" aria-label="Scan barcode dengan kamera" title="Scan barcode dengan kamera" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8"/></svg></button>
+            <button id="tombol-bill" class="tombol tombol-alat" type="button" title="Bill terbuka (meja/pelanggan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8l3 3v15l-3-2-2 2-2-2-2 2-2-2-3 2V6z"/><path d="M9 10h6M9 14h4"/></svg><span class="teks-bill">Bill</span><span id="jumlah-bill" class="lencana-angka" hidden></span></button>
+          </div>
+          <div id="filter-kategori" class="chip-baris"></div>
+          <div id="grid-produk" class="grid-produk"></div>
+        </div>
+
+        <aside id="panel-keranjang" class="panel-keranjang" aria-label="Keranjang">
+          <div class="kepala-keranjang">
+            <h2>Keranjang</h2>
+            <button id="simpan-bill" class="tombol teks" type="button" title="Simpan pesanan sebagai bill (bayar nanti)">Simpan bill</button>
+            <button id="kosongkan-keranjang" class="tombol teks" type="button">Kosongkan</button>
+            <button id="tutup-keranjang" class="tombol ikon hanya-hp" type="button" aria-label="Tutup keranjang"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </div>
+          <div id="info-bill" class="info-bill" hidden>
+            <span><b id="info-bill-nama"></b> <small id="info-bill-ket"></small></span>
+            <button id="lepas-bill" class="tombol teks kecil" type="button">Lepas</button>
+          </div>
+          <div id="daftar-keranjang" class="daftar-keranjang"></div>
+          <div class="ringkas-keranjang">
+            <div class="baris-diskon">
+              <span>Diskon</span>
+              <select id="jenis-diskon" aria-label="Jenis diskon">
+                <option value="nominal">Rp</option>
+                <option value="persen">%</option>
+              </select>
+              <input id="nilai-diskon" inputmode="decimal" placeholder="0" aria-label="Nilai diskon">
+            </div>
+            <input id="catatan-trx" maxlength="200" placeholder="Catatan (opsional)" aria-label="Catatan transaksi">
+            <div class="rincian">
+              <div><span>Subtotal</span><span id="rincian-subtotal"></span></div>
+              <div id="baris-rincian-diskon"><span>Diskon</span><span id="rincian-diskon"></span></div>
+              <div id="baris-rincian-pajak"><span id="label-pajak">Pajak</span><span id="rincian-pajak"></span></div>
+              <div class="total"><span>Total</span><span id="rincian-total"></span></div>
+            </div>
+            <button id="tombol-bayar" class="tombol utama besar" type="button">Bayar<kbd class="hanya-desktop">F9</kbd></button>
+          </div>
+        </aside>
+
+        <button id="bilah-keranjang" class="bilah-keranjang hanya-hp" type="button" hidden>
+          <span id="bilah-info"></span><span>Keranjang ›</span>
+        </button>
+      </section>
+
+      <!-- ---------- DAFTAR ITEM (Admin) ---------- -->
+      <section data-layar="item" class="layar" hidden>
+        <div class="alat">
+          <input id="cari-item" type="search" placeholder="Cari nama, kode, atau ID…" autocomplete="off">
+          <div class="filter">
+            <select id="filter-tipe" aria-label="Filter tipe">
+              <option value="">Semua tipe</option>
+              <option>Barang</option>
+              <option>Bahan</option>
+              <option>Menu</option>
+            </select>
+            <select id="filter-kategori-item" aria-label="Filter kategori"></select>
+            <select id="filter-aktif" aria-label="Filter status">
+              <option value="Ya">Aktif</option>
+              <option value="Tidak">Nonaktif</option>
+              <option value="">Semua</option>
+            </select>
+          </div>
+          <div class="aksi-item">
+            <button id="tombol-harga-massal" class="tombol" type="button">Ubah harga massal</button>
+            <button id="tombol-item-baru" class="tombol utama" type="button">+ Item</button>
+          </div>
+        </div>
+        <div id="daftar-item" class="daftar-kartu"></div>
+      </section>
+
+      <!-- ---------- FORM ITEM (Admin) ---------- -->
+      <section data-layar="form-item" class="layar" hidden>
+        <div class="kepala-form">
+          <button id="kembali-ke-item" class="tombol teks" type="button">‹ Daftar item</button>
+        </div>
+        <form id="form-item" class="kartu" autocomplete="off" novalidate>
+          <h2 id="judul-form-item" style="margin-bottom:14px">Item baru</h2>
+          <label>Nama <input id="fi-nama" maxlength="100" required></label>
+          <div class="dua-kolom">
+            <label>Tipe
+              <select id="fi-tipe">
+                <option>Barang</option>
+                <option>Bahan</option>
+                <option>Menu</option>
+              </select>
+            </label>
+            <label>Satuan <input id="fi-satuan" maxlength="20" list="daftar-satuan" placeholder="pcs"></label>
+          </div>
+          <p id="fi-tipe-bantu" class="bantu"></p>
+          <div class="dua-kolom">
+            <label>Kategori <input id="fi-kategori" maxlength="50" list="daftar-kategori"></label>
+            <label>Kode / barcode <input id="fi-kode" maxlength="50" placeholder="opsional"></label>
+          </div>
+          <div class="dua-kolom">
+            <label><span id="fi-label-beli">Harga beli</span> <input id="fi-harga-beli" inputmode="numeric" placeholder="0"></label>
+            <label id="fi-bungkus-jual">Harga jual <input id="fi-harga-jual" inputmode="numeric" placeholder="0"></label>
+          </div>
+          <p id="fi-margin" class="info-margin"></p>
+          <div id="fi-bagian-stok" class="dua-kolom">
+            <label id="fi-bungkus-stok-awal">Stok awal <input id="fi-stok-awal" inputmode="decimal" placeholder="0"></label>
+            <label id="fi-bungkus-stok-kini">Stok saat ini <input id="fi-stok-kini" disabled></label>
+            <label>Stok minimum <input id="fi-stok-min" inputmode="decimal" placeholder="0"></label>
+          </div>
+          <label class="centang"><input id="fi-lacak" type="checkbox" checked> <span id="fi-label-lacak">Lacak stok</span></label>
+          <label>URL foto (opsional) <input id="fi-foto" type="url" maxlength="500" placeholder="https://…"></label>
+          <img id="fi-pratinjau-foto" class="pratinjau-foto" alt="" hidden>
+          <div class="aksi-form">
+            <button class="tombol utama" type="submit">Simpan item</button>
+            <button id="fi-tombol-aktif" class="tombol bahaya" type="button" hidden></button>
+          </div>
+          <p id="fi-pesan" class="pesan-galat" role="alert"></p>
+        </form>
+
+        <div id="bagian-resep" class="kartu" hidden>
+          <h2 style="margin-bottom:4px">Resep (per 1 porsi)</h2>
+          <p class="bantu" style="margin-top:4px">Stok bahan dipotong sebesar qty resep × qty terjual. HPP menu dihitung otomatis.</p>
+          <table class="tabel-resep"><tbody id="baris-resep"></tbody></table>
+          <button id="tambah-bahan" class="tombol kecil" type="button">+ Tambah bahan</button>
+          <div class="ringkas-hpp"><span>HPP per porsi</span><span id="total-hpp"></span></div>
+          <button id="simpan-resep" class="tombol utama" type="button">Simpan resep</button>
+        </div>
+        <p id="resep-belum" class="bantu" hidden>Simpan item Menu ini terlebih dahulu untuk mengisi resep.</p>
+
+        <div id="bagian-riwayat-harga" class="kartu" hidden>
+          <div class="kepala-form" style="margin-bottom:0">
+            <h2 style="flex:1">Riwayat harga</h2>
+            <button id="muat-riwayat-harga" class="tombol kecil" type="button">Tampilkan</button>
+          </div>
+          <div id="daftar-riwayat-harga" class="tumpuk" style="margin-top:10px"></div>
+        </div>
+      </section>
+
+      <!-- ---------- STOK (Admin) ---------- -->
+      <section data-layar="stok" class="layar" hidden>
+        <div id="tab-stok" class="tab-baris" role="tablist">
+          <button type="button" data-tab="masuk" class="aktif">Stok masuk</button>
+          <button type="button" data-tab="opname">Opname</button>
+          <button type="button" data-tab="riwayat">Riwayat</button>
+          <button type="button" data-tab="menipis">Menipis <span id="badge-menipis-tab" class="lencana-angka" hidden></span></button>
+        </div>
+
+        <div data-tab-isi="masuk">
+          <form id="form-masuk" class="kartu" autocomplete="off" novalidate>
+            <label>Cari item <input id="sm-cari" type="search" placeholder="Ketik untuk menyaring daftar…"></label>
+            <label>Item <select id="sm-item"></select></label>
+            <p id="sm-info" class="bantu"></p>
+            <div class="dua-kolom">
+              <label>Qty masuk <input id="sm-qty" inputmode="decimal" placeholder="0"></label>
+              <label>Harga beli / satuan <input id="sm-harga" inputmode="numeric" placeholder="tidak berubah"></label>
+            </div>
+            <div class="dua-kolom">
+              <label>No. faktur <input id="sm-ref" maxlength="50" placeholder="opsional"></label>
+              <label>Keterangan <input id="sm-ket" maxlength="200" placeholder="mis. nama supplier"></label>
+            </div>
+            <button class="tombol utama besar" type="submit">Simpan stok masuk</button>
+            <p id="sm-pesan" class="pesan-galat" role="alert"></p>
+          </form>
+        </div>
+
+        <div data-tab-isi="opname" hidden>
+          <div class="kartu">
+            <p class="bantu" style="margin-top:0">Isi stok fisik hasil hitung. Hanya item yang diisi yang diproses; selisih dicatat di riwayat.</p>
+            <div class="dua-kolom">
+              <input id="op-cari" type="search" placeholder="Cari item…" aria-label="Cari item opname">
+              <select id="op-kategori" aria-label="Kategori opname"></select>
+            </div>
+            <div id="op-daftar" class="daftar-opname"></div>
+            <label>Keterangan <input id="op-ket" maxlength="200" placeholder="mis. Opname akhir bulan"></label>
+            <button id="op-simpan" class="tombol utama besar" type="button">Simpan opname</button>
+            <p id="op-pesan" class="pesan-galat" role="alert"></p>
+          </div>
+        </div>
+
+        <div data-tab-isi="riwayat" hidden>
+          <div class="kartu">
+            <div class="dua-kolom">
+              <select id="rw-item" aria-label="Item"></select>
+              <select id="rw-jenis" aria-label="Jenis">
+                <option value="">Semua jenis</option>
+                <option>Masuk</option><option>Jual</option><option>Opname</option><option>Void</option><option>Keluar</option><option>Koreksi</option>
+              </select>
+              <label>Dari <input id="rw-dari" type="date"></label>
+              <label>Sampai <input id="rw-sampai" type="date"></label>
+            </div>
+            <button id="rw-tampil" class="tombol utama" type="button" style="width:100%">Tampilkan</button>
+          </div>
+          <div id="rw-daftar" class="tumpuk"></div>
+        </div>
+
+        <div data-tab-isi="menipis" hidden>
+          <div id="daftar-menipis" class="tumpuk"></div>
+        </div>
+      </section>
+
+      <!-- ---------- NOTA / TRANSAKSI ---------- -->
+      <section data-layar="nota" class="layar" hidden>
+        <div class="kartu">
+          <p id="nt-info-kasir" class="bantu" style="margin-top:0">Transaksi Anda hari ini.</p>
+          <div class="dua-kolom">
+            <input id="nt-cari" placeholder="Cari no. nota…" autocomplete="off" aria-label="Cari nomor nota">
+            <select id="nt-status" data-admin aria-label="Status">
+              <option value="">Semua status</option><option>Lunas</option><option>Batal</option>
+            </select>
+            <label data-admin>Dari <input id="nt-dari" type="date"></label>
+            <label data-admin>Sampai <input id="nt-sampai" type="date"></label>
+            <select id="nt-kasir" data-admin aria-label="Kasir"></select>
+          </div>
+          <button id="nt-tampil" class="tombol utama" type="button" style="width:100%">Tampilkan</button>
+        </div>
+        <div id="nt-ringkas" class="ringkas-nota"></div>
+        <div id="nt-daftar" class="tumpuk"></div>
+      </section>
+
+      <!-- ---------- ADMIN ---------- -->
+      <section data-layar="admin" class="layar" hidden>
+        <form id="form-atur" class="kartu" autocomplete="off" novalidate>
+          <h2 style="margin-bottom:14px">Pengaturan toko</h2>
+          <label>Nama usaha <input id="at-nama" maxlength="100"></label>
+          <label>Alamat <input id="at-alamat" maxlength="200"></label>
+          <div class="dua-kolom">
+            <label>Telepon <input id="at-telepon" maxlength="30" inputmode="tel"></label>
+            <label>Mode usaha
+              <select id="at-mode"><option>Retail</option><option>F&amp;B</option><option>Campuran</option></select>
+            </label>
+          </div>
+          <p class="bantu">Retail menyembunyikan tipe Bahan/Menu dan resep.</p>
+          <div class="dua-kolom">
+            <label>Pajak (%) <input id="at-pajak" inputmode="decimal" placeholder="0"></label>
+            <label>Prefix nota <input id="at-prefix" maxlength="10" autocapitalize="characters"></label>
+            <label>Lebar struk
+              <select id="at-lebar"><option value="58">58 mm</option><option value="80">80 mm</option></select>
+            </label>
+            <label>Zona waktu
+              <select id="at-zona">
+                <option value="Asia/Jakarta">WIB (Asia/Jakarta)</option>
+                <option value="Asia/Makassar">WITA (Asia/Makassar)</option>
+                <option value="Asia/Jayapura">WIT (Asia/Jayapura)</option>
+              </select>
+            </label>
+          </div>
+          <label>Footer struk <input id="at-footer" maxlength="200"></label>
+          <label class="centang"><input id="at-minus" type="checkbox"> Izinkan jual walau stok habis</label>
+          <label class="centang"><input id="at-wajib-shift" type="checkbox"> Wajib buka kasir (shift) sebelum berjualan</label>
+          <button class="tombol utama besar" type="submit">Simpan pengaturan</button>
+          <p id="at-pesan" class="pesan-galat" role="alert"></p>
+        </form>
+
+        <div class="kartu">
+          <div class="kepala-form">
+            <h2 style="flex:1">Pengguna</h2>
+            <button id="pg-baru" class="tombol utama kecil" type="button">+ Pengguna</button>
+          </div>
+          <div id="pg-daftar" class="tumpuk"></div>
+        </div>
+        <p id="info-versi" class="bantu" style="text-align:center"></p>
+      </section>
+      <!-- ---------- KAS & TUTUP KASIR ---------- -->
+      <section data-layar="kas" class="layar" hidden>
+        <div id="ks-status" class="kartu"></div>
+        <div id="ks-bagian-kas" class="kartu" hidden>
+          <div class="kepala-kartu">
+            <h2>Kas selama shift</h2>
+            <button id="ks-catat" class="tombol utama kecil" type="button">+ Catat kas</button>
+          </div>
+          <div id="ks-daftar" class="tumpuk"></div>
+        </div>
+        <div class="kartu" data-admin>
+          <div class="kepala-kartu"><h2>Riwayat shift &amp; arus kas</h2></div>
+          <div class="kontrol-laporan">
+            <label>Dari <input id="ks-dari" type="date"></label>
+            <label>Sampai <input id="ks-sampai" type="date"></label>
+            <button id="ks-tampil" class="tombol utama" type="button">Tampilkan</button>
+          </div>
+          <h3 class="subjudul">Shift</h3>
+          <div id="ks-shift" class="tabel-gulung"></div>
+          <div class="kepala-kartu" style="margin-top:18px">
+            <h3 class="subjudul" style="margin:0">Arus kas</h3>
+            <button id="ks-catat-toko" class="tombol kecil" type="button">+ Catat kas toko</button>
+          </div>
+          <div id="ks-ringkas" class="ringkas-nota"></div>
+          <div id="ks-arus" class="tabel-gulung"></div>
+        </div>
+      </section>
+
+      <!-- ---------- LAPORAN (Admin) ---------- -->
+      <section data-layar="laporan" class="layar" hidden>
+        <div class="judul-cetak">
+          <h1 id="lp-judul-cetak"></h1>
+          <p id="lp-sub-cetak"></p>
+        </div>
+        <div class="kartu no-print">
+          <div id="lp-preset" class="preset-baris"></div>
+          <div class="kontrol-laporan">
+            <label>Dari <input id="lp-dari" type="date"></label>
+            <label>Sampai <input id="lp-sampai" type="date"></label>
+            <button id="lp-tampil" class="tombol utama" type="button">Tampilkan</button>
+          </div>
+          <div class="aksi-laporan">
+            <button id="lp-cetak" class="tombol kecil" type="button">Cetak / Simpan PDF</button>
+            <button id="lp-ekspor" class="tombol kecil" type="button">Ekspor ke Sheet</button>
+            <span id="lp-hasil-ekspor"></span>
+          </div>
+        </div>
+        <div id="lp-kpi" class="kpi-grid tiga"></div>
+        <div class="grid-dasbor">
+          <div class="kartu lebar">
+            <div class="kepala-kartu">
+              <h2>Penjualan per hari</h2>
+              <button id="lp-tabel-hari" class="tombol teks kecil no-print" type="button" aria-expanded="false">Lihat tabel</button>
+            </div>
+            <div id="lp-grafik" class="grafik"></div>
+            <div id="lp-tabel-hari-isi" class="tabel-gulung" hidden></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Produk terlaris</h2><small>10 teratas menurut qty</small></div>
+            <div id="lp-terlaris" class="tabel-gulung"></div>
+          </div>
+          <div class="kartu">
+            <div class="kepala-kartu"><h2>Metode bayar</h2></div>
+            <div id="lp-metode" class="daftar-bar"></div>
+            <div class="kepala-kartu" style="margin-top:18px"><h2>Per kasir</h2></div>
+            <div id="lp-kasir" class="tabel-gulung"></div>
+          </div>
+          <div class="kartu lebar">
+            <div class="kepala-kartu"><h2>Arus kas</h2><small>biaya usaha mengurangi laba bersih; belanja stok &amp; setoran tidak</small></div>
+            <div id="lp-kas" class="daftar-bar"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    </div>
+
+    <nav id="nav-bawah" class="navbawah" aria-label="Navigasi"></nav>
+  </div>
+
+  <!-- ================= LEMBAR MENU LAINNYA (HP) ================= -->
+  <div id="modal-lainnya" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-lainnya">
+      <div class="kepala-modal">
+        <h2 id="judul-lainnya">Menu lainnya</h2>
+        <button id="tutup-lainnya" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="isi-lainnya" class="lembar-menu"></div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL BAYAR ================= -->
+  <div id="modal-bayar" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-bayar">
+      <div class="kepala-modal">
+        <h2 id="judul-bayar">Pembayaran</h2>
+        <button id="tutup-bayar" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="total-besar"><small>Total tagihan</small><b id="bayar-total"></b></div>
+      <div id="pilih-metode" class="segmen">
+        <button type="button" data-metode="Tunai">Tunai</button>
+        <button type="button" data-metode="QRIS">QRIS</button>
+        <button type="button" data-metode="Transfer">Transfer</button>
+      </div>
+      <div id="bagian-tunai">
+        <label>Uang diterima <input id="bayar-nilai" inputmode="numeric" placeholder="0"></label>
+        <div id="nominal-cepat" class="nominal-cepat"></div>
+        <div id="kotak-kembalian" class="kembalian"><span id="label-kembalian">Kembalian</span><b id="bayar-kembalian"></b></div>
+      </div>
+      <div id="bagian-nontunai" hidden>
+        <label>Referensi (opsional) <input id="bayar-referensi" maxlength="50" placeholder="No. referensi / nama pengirim"></label>
+      </div>
+      <button id="proses-bayar" class="tombol utama besar" type="button">Proses transaksi</button>
+      <p id="bayar-pesan" class="pesan-galat" role="alert"></p>
+    </div>
+  </div>
+
+  <!-- ================= MODAL SUKSES ================= -->
+  <div id="modal-sukses" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-sukses" style="text-align:center">
+      <div class="sukses-ikon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+      <h2 id="judul-sukses">Transaksi berhasil</h2>
+      <p id="sukses-nota" class="bantu" style="margin:6px 0 12px"></p>
+      <div id="sukses-kembalian" class="total-besar"><small>Kembalian</small><b id="sukses-kembalian-nilai"></b></div>
+      <div class="tumpuk">
+        <button id="sukses-cetak" class="tombol utama besar" type="button">Cetak struk</button>
+        <button id="sukses-baru" class="tombol besar" type="button" data-fokus-awal>Transaksi baru</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DETAIL NOTA ================= -->
+  <div id="modal-nota" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-modal-nota">
+      <div class="kepala-modal">
+        <h2 id="judul-modal-nota">Detail nota</h2>
+        <button id="tutup-modal-nota" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="isi-modal-nota" class="struk-pratinjau isi-struk"></div>
+      <div class="tumpuk">
+        <button id="nota-cetak" class="tombol utama besar" type="button">Cetak ulang struk</button>
+      </div>
+      <div id="bagian-void" class="bagian-void" hidden>
+        <label>Alasan pembatalan <input id="void-alasan" maxlength="200" placeholder="mis. salah input, pelanggan batal"></label>
+        <button id="void-proses" class="tombol bahaya besar" type="button">Batalkan nota (void)</button>
+        <p class="bantu" style="margin:8px 0 0">Stok dikembalikan otomatis. Nota tetap tersimpan dengan status Batal.</p>
+        <p id="void-pesan" class="pesan-galat" role="alert"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PENGGUNA ================= -->
+  <div id="modal-pengguna" class="modal" hidden>
+    <form id="form-pengguna" class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-pengguna" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-pengguna">Pengguna baru</h2>
+        <button id="tutup-pengguna" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <label>Username <input id="pg-username" maxlength="30" autocapitalize="none" spellcheck="false" placeholder="huruf kecil, mis. siti"></label>
+      <label>Nama <input id="pg-nama" maxlength="60"></label>
+      <label>Peran
+        <select id="pg-role"><option>Kasir</option><option>Admin</option></select>
+      </label>
+      <label class="centang"><input id="pg-aktif" type="checkbox" checked> Aktif</label>
+      <label id="pg-bungkus-reset" class="centang"><input id="pg-reset" type="checkbox"> Reset PIN (buat PIN sementara baru)</label>
+      <p class="bantu">Pengguna baru mendapat PIN sementara dan wajib menggantinya saat login pertama.</p>
+      <button class="tombol utama besar" type="submit">Simpan</button>
+      <p id="pg-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+
+  <!-- ================= MODAL PIN SEMENTARA ================= -->
+  <div id="modal-pin-sementara" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-pin-sementara" style="text-align:center">
+      <h2 id="judul-pin-sementara">PIN sementara</h2>
+      <p class="bantu" style="margin:8px 0">Berikan ke <b id="ps-username"></b>. PIN ini hanya ditampilkan sekali dan wajib diganti saat login.</p>
+      <div id="ps-pin" class="pin-besar"></div>
+      <button id="ps-tutup" class="tombol utama besar" type="button">Sudah dicatat</button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL CATAT KAS ================= -->
+  <div id="modal-kas" class="modal" hidden>
+    <form id="form-kas" class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-kas" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-kas">Catat kas</h2>
+        <button id="tutup-kas" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="kas-jenis" class="segmen dua" role="group" aria-label="Jenis kas">
+        <button type="button" data-jenis="Keluar">Kas keluar</button>
+        <button type="button" data-jenis="Masuk">Kas masuk</button>
+      </div>
+      <label>Kategori <select id="kas-kategori"></select></label>
+      <label>Jumlah <input id="kas-jumlah" inputmode="numeric" placeholder="0"></label>
+      <label>Keterangan <input id="kas-ket" maxlength="200" placeholder="mis. beli es batu, bayar listrik"></label>
+      <p id="kas-bantu" class="bantu"></p>
+      <button class="tombol utama besar" type="submit">Simpan</button>
+      <p id="kas-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+
+  <!-- ================= MODAL TUTUP KASIR ================= -->
+  <div id="modal-tutup" class="modal" hidden>
+    <form id="form-tutup" class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-tutup" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-tutup">Tutup kasir</h2>
+        <button id="tutup-tutup" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <p id="tt-info" class="bantu" style="margin-top:0"></p>
+      <div class="kembalian"><span>Seharusnya di laci</span><b id="tt-seharusnya"></b></div>
+      <div id="tt-mode" class="segmen dua" role="group" aria-label="Cara menghitung uang">
+        <button type="button" data-mode="pecahan">Hitung per pecahan</button>
+        <button type="button" data-mode="total">Isi total</button>
+      </div>
+      <div id="tt-pecahan" class="grid-pecahan"></div>
+      <label id="tt-bungkus-total" hidden>Uang fisik di laci <input id="tt-total" inputmode="numeric" placeholder="0"></label>
+      <div id="tt-hasil" class="kembalian"><span id="tt-label">Uang fisik</span><b id="tt-fisik"></b></div>
+      <p id="tt-selisih" class="info-selisih"></p>
+      <label>Catatan <input id="tt-catatan" maxlength="200" placeholder="opsional"></label>
+      <button class="tombol utama besar" type="submit">Tutup kasir</button>
+      <p id="tt-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+
+  <!-- ================= MODAL REKAP SHIFT ================= -->
+  <div id="modal-rekap" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-rekap">
+      <div class="kepala-modal">
+        <h2 id="judul-rekap">Rekap shift</h2>
+        <button id="tutup-rekap" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="rk-isi" class="struk-pratinjau isi-struk"></div>
+      <div class="tumpuk">
+        <button id="rk-cetak" class="tombol utama besar" type="button">Cetak rekap</button>
+        <button id="rk-tutup-shift" class="tombol bahaya besar" type="button" hidden>Tutup shift ini</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL BILL TERBUKA ================= -->
+  <div id="modal-bill" class="modal" hidden>
+    <div class="isi-modal lebar" role="dialog" aria-modal="true" aria-labelledby="judul-bill">
+      <div class="kepala-modal">
+        <h2 id="judul-bill">Bill terbuka</h2>
+        <button id="tutup-bill" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <p class="bantu" style="margin-top:0">Pesanan yang disimpan untuk dibayar nanti. Stok baru dipotong saat dibayar.</p>
+      <div id="daftar-bill" class="tumpuk"></div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL SIMPAN BILL ================= -->
+  <div id="modal-simpan-bill" class="modal" hidden>
+    <form id="form-simpan-bill" class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-simpan-bill" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-simpan-bill">Simpan sebagai bill</h2>
+        <button id="tutup-simpan-bill" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <label>Meja / nama pelanggan <input id="sb-nama" maxlength="40" list="saran-meja" placeholder="mis. Meja 3 atau Pak Budi"></label>
+      <div id="sb-cepat" class="modal-cepat"></div>
+      <label>Catatan <input id="sb-catatan" maxlength="200" placeholder="opsional, mis. tanpa gula"></label>
+      <button class="tombol utama besar" type="submit">Simpan bill</button>
+      <p id="sb-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+  <datalist id="saran-meja"></datalist>
+
+  <!-- ================= MODAL KAMERA ================= -->
+  <div id="modal-kamera" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-kamera">
+      <div class="kepala-modal">
+        <h2 id="judul-kamera">Scan barcode</h2>
+        <button id="tutup-kamera" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="bingkai-kamera"><video id="video-kamera" playsinline muted></video><span class="garis-bidik" aria-hidden="true"></span></div>
+      <p id="status-kamera" class="bantu" role="status" style="margin:10px 0"></p>
+      <label id="bungkus-foto-barcode" class="tombol besar" hidden>Ambil foto barcode
+        <input id="foto-barcode" type="file" accept="image/*" capture="environment" class="sr-only">
+      </label>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PRINTER ================= -->
+  <div id="modal-printer" class="modal" hidden>
+    <div class="isi-modal" role="dialog" aria-modal="true" aria-labelledby="judul-printer">
+      <div class="kepala-modal">
+        <h2 id="judul-printer">Printer struk (perangkat ini)</h2>
+        <button id="tutup-printer" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="pilih-printer" class="segmen dua" role="group" aria-label="Cara cetak">
+        <button type="button" data-cetak="browser">Dialog cetak</button>
+        <button type="button" data-cetak="rawbt">RawBT (Bluetooth)</button>
+      </div>
+      <p id="ket-printer" class="bantu"></p>
+      <button id="tes-cetak" class="tombol besar" type="button">Tes cetak</button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL HARGA MASSAL ================= -->
+  <div id="modal-harga" class="modal" hidden>
+    <form id="form-harga" class="isi-modal lebar" role="dialog" aria-modal="true" aria-labelledby="judul-harga" autocomplete="off" novalidate>
+      <div class="kepala-modal">
+        <h2 id="judul-harga">Ubah harga jual massal</h2>
+        <button id="tutup-harga" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="dua-kolom">
+        <label>Kategori <select id="hm-kategori"></select></label>
+        <label>Tipe
+          <select id="hm-tipe"><option value="">Barang & Menu</option><option>Barang</option><option>Menu</option></select>
+        </label>
+      </div>
+      <div id="hm-mode" class="segmen dua" role="group" aria-label="Cara mengubah">
+        <button type="button" data-mode="persen">Persen (%)</button>
+        <button type="button" data-mode="nominal">Nominal (Rp)</button>
+      </div>
+      <div class="dua-kolom">
+        <label><span id="hm-label-nilai">Naik/turun (%)</span> <input id="hm-nilai" inputmode="decimal" placeholder="mis. 10 atau -5"></label>
+        <label>Bulatkan ke atas
+          <select id="hm-bulat"><option value="0">Tidak</option><option value="100">Rp 100</option><option value="500" selected>Rp 500</option><option value="1000">Rp 1.000</option></select>
+        </label>
+      </div>
+      <button id="hm-pratinjau" class="tombol besar" type="button">Pratinjau</button>
+      <div id="hm-hasil" class="tabel-gulung hasil-harga"></div>
+      <button id="hm-simpan" class="tombol utama besar" type="submit" disabled>Simpan perubahan</button>
+      <p id="hm-pesan" class="pesan-galat" role="alert"></p>
+    </form>
+  </div>
+
+  <datalist id="daftar-kategori"></datalist>
+  <datalist id="daftar-satuan">
+    <option value="pcs"></option><option value="kg"></option><option value="gram"></option>
+    <option value="liter"></option><option value="ml"></option><option value="bungkus"></option>
+    <option value="botol"></option><option value="gelas"></option><option value="porsi"></option>
+  </datalist>
+
+  <div id="struk" class="struk isi-struk" aria-hidden="true"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <div id="memuat" class="memuat" hidden><div class="pemutar"></div></div>
+
+  <?!= include('Js'); ?>
+</body>
+</html>
