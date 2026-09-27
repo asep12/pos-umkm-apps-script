@@ -152,5 +152,13 @@ Terverifikasi di emulator (`node dev/uji-e2e.js`, total 57 skenario) dan UI loka
 - [x] Nilai persediaan = Σ stok × harga beli; Menu & item tak dilacak tidak dihitung.
 - [x] Label: barcode EAN-13 valid (30 batang), kode baru tersimpan ke kolom Kode.
 
+## 5e. Poles tampilan HP (selesai, v1.5.1)
+Audit di lebar 360 px (skill mobile-design: target sentuh ≥ 44 px, jarak ≥ 8 px, zona jempol) — terang & gelap.
+- Semua tombol/chip/tab/kontrol qty ≥ 44 px di layar < 900 px (dicek otomatis: 0 target kecil, 0 luberan horizontal).
+- Nilai KPI tidak lagi terpotong elipsis ("Rp 3.576. …"); boleh turun baris.
+- Rentang tanggal (Kas, Laporan): tanggal dua kolom, "Tampilkan" selebar kartu. Filter Nota & Item disusun ulang.
+- Baris diskon keranjang tidak meluber; menu "Alat" dibuka ke kanan di HP; tab Stok bisa digeser dengan isyarat pudar.
+- Kartu produk kasir lebih pendek (lebih banyak item terlihat).
+
 ## 6. Fase Berikutnya (ringkas)
 - **Fase 4** (opsional): scanner kamera, RawBT, varian/topping, satuan konversi, bill terbuka, offline ringan, arsip tahunan.

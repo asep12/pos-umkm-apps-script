@@ -3,7 +3,7 @@
  * Kolom dipetakan berdasarkan nama header, bukan nomor kolom.
  */
 
-const VERSI = '1.5.0';
+const VERSI = '1.5.1';
 
 const SHEET = Object.freeze({
   ITEM: 'Item',

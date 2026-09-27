@@ -107,7 +107,7 @@
         <div id="db-kpi" class="kpi-grid"></div>
         <div class="grid-dasbor">
           <div class="kartu">
-            <div class="kepala-kartu"><h2>Penjualan 7 hari</h2><small>arahkan/ketuk batang untuk detail</small></div>
+            <div class="kepala-kartu"><h2>Penjualan 7 hari</h2><small><span class="hanya-desktop">arahkan/</span>ketuk batang untuk detail</small></div>
             <div id="db-grafik-7" class="grafik"></div>
           </div>
           <div class="kartu">
@@ -361,12 +361,12 @@
         <div class="kartu">
           <p id="nt-info-kasir" class="bantu" style="margin-top:0">Transaksi Anda hari ini.</p>
           <div class="dua-kolom">
-            <input id="nt-cari" placeholder="Cari no. nota…" autocomplete="off" aria-label="Cari nomor nota">
+            <input id="nt-cari" class="penuh" placeholder="Cari no. nota…" autocomplete="off" aria-label="Cari nomor nota">
+            <label data-admin>Dari <input id="nt-dari" type="date"></label>
+            <label data-admin>Sampai <input id="nt-sampai" type="date"></label>
             <select id="nt-status" data-admin aria-label="Status">
               <option value="">Semua status</option><option>Lunas</option><option>Batal</option>
             </select>
-            <label data-admin>Dari <input id="nt-dari" type="date"></label>
-            <label data-admin>Sampai <input id="nt-sampai" type="date"></label>
             <select id="nt-kasir" data-admin aria-label="Kasir"></select>
           </div>
           <button id="nt-tampil" class="tombol utama" type="button" style="width:100%">Tampilkan</button>

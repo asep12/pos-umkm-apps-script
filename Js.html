@@ -1211,6 +1211,7 @@
   function pilihTabStok(tab) {
     tabStok = tab;
     $$('#tab-stok button').forEach((b) => b.classList.toggle('aktif', b.dataset.tab === tab));
+    geserKeTab($('#tab-stok'), $('#tab-stok button.aktif'));
     $$('[data-tab-isi]').forEach((el) => { el.hidden = el.dataset.tabIsi !== tab; });
     if (tab === 'masuk') renderPilihanMasuk();
     if (tab === 'opname') renderOpname();
@@ -1219,6 +1220,15 @@
     if (tab === 'persediaan') tampilPersediaan();
   }
   $$('#tab-stok button').forEach((b) => b.addEventListener('click', () => pilihTabStok(b.dataset.tab)));
+
+  /** HP: tab yang dipilih digeser agar terlihat utuh (tanpa menggulir halaman secara vertikal). */
+  function geserKeTab(baris, tombol) {
+    if (!baris || !tombol || baris.scrollWidth <= baris.clientWidth) return;
+    const kiri = tombol.offsetLeft - baris.offsetLeft;
+    const kanan = kiri + tombol.offsetWidth;
+    if (kiri < baris.scrollLeft + 16) baris.scrollLeft = kiri - 16;
+    else if (kanan > baris.scrollLeft + baris.clientWidth - 40) baris.scrollLeft = kanan - baris.clientWidth + 40;
+  }
 
   /** Item yang punya stok sendiri (bukan Menu) dan aktif. */
   const itemBerstok = () => (S.semuaItem || []).filter((i) => i.tipe !== 'Menu' && i.aktif);

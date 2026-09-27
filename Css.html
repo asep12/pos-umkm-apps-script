@@ -719,6 +719,47 @@
   @media (max-width: 520px) { .baris-label .kode { display: none; } .baris-label { grid-template-columns: 22px minmax(0, 1fr) auto; } }
   .label-cetak { display: none; }
 
+  /* ---------- Poles HP (audit mobile-design: 360 px) ----------
+     Jari tidak presisi: semua target sentuh ≥ 44 px, jarak ≥ 8 px; tidak ada angka uang yang terpotong. */
+  @media (max-width: 899px) {
+    .chip, .tombol.kecil, .tab-baris button, .segmen button, .nominal-cepat .tombol,
+    .kontrol-qty .tombol, .kontrol-qty input, .toast-aksi { min-height: 44px; }
+    .kontrol-qty .tombol { width: 44px; }
+    .tombol.teks { min-height: 44px; }
+    .tombol-akun { min-height: 44px; min-width: 44px; justify-content: center; }
+    .chip-shift { min-height: 44px; }
+  }
+  @media (max-width: 520px) {
+    /* Rentang tanggal: dua kolom tanggal, tombol Tampilkan selebar kartu di bawahnya. */
+    .kontrol-laporan { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kontrol-laporan > .tombol { grid-column: 1 / -1; }
+    .aksi-laporan .tombol { flex: 1 1 140px; }
+    /* Nilai KPI boleh turun baris di spasi ("Rp" / angka), tidak pernah dipotong elipsis. */
+    .kpi { padding: 12px; }
+    .kpi-grid > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .kpi .nilai { font-size: clamp(17px, 5.4vw, 22px); white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+    /* Kartu produk: gambar/inisial lebih pendek agar lebih banyak item terlihat tanpa menggulir. */
+    .grid-produk .gambar-produk, .grid-produk .inisial { aspect-ratio: 16 / 10; }
+    /* Filter item: kategori selebar layar, tipe & status berdampingan. */
+    .alat .filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .alat .filter #filter-kategori-item { grid-column: 1 / -1; order: -1; }
+    /* Tab stok bisa digeser; ujung kanan memudar sebagai isyarat masih ada tab lain. */
+    .tab-baris { margin-inline: -16px; padding: 0 40px 2px 16px; scroll-padding-inline: 16px; scroll-snap-type: x proximity;
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
+      mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+    .tab-baris button { flex: none; scroll-snap-align: start; padding: 0 14px; }
+    .chip-baris { margin-inline: -12px; padding-inline: 12px; scroll-padding-inline: 12px; }
+    /* Keranjang: kepala tidak berdesakan, baris diskon tidak meluber. */
+    .kepala-keranjang { gap: 2px; padding: 8px 8px 8px 14px; }
+    .kepala-keranjang .tombol.teks { padding: 0 8px; font-size: 14px; }
+    .baris-diskon { grid-template-columns: auto 76px minmax(0, 1fr); }
+    .baris-diskon input, .baris-diskon select { width: 100%; min-width: 0; }
+  }
+  .dua-kolom > .penuh { grid-column: 1 / -1; }
+  @media (max-width: 520px) { #op-cari, #op-kategori { grid-column: 1 / -1; } }
+  /* Menu Alat: di HP tombolnya di kiri, jadi menu dibuka ke kanan agar tidak keluar layar. */
+  @media (max-width: 759px) { .menu-alat { left: 0; right: auto; max-width: calc(100vw - 32px); } }
+
   /* ---------- Toast & memuat ---------- */
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%); z-index: 90; max-width: calc(100% - 24px);

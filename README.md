@@ -4,7 +4,7 @@ Aplikasi kasir (Point of Sales) untuk UMKM retail/sembako, F&B, atau campuran.
 Database Google Sheets, backend Apps Script, tampilan Web App yang nyaman di HP/tablet.
 **Satu Spreadsheet = satu toko.**
 
-Versi: **1.5.0 (impor item Excel/CSV, nilai persediaan, label harga & barcode)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
+Versi: **1.5.1 (impor item, nilai persediaan, label barcode, tampilan HP dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
 
 ---
 
