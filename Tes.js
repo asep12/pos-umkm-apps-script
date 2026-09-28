@@ -394,5 +394,20 @@ function daftarKasusTes_() {
       samaDengan_(formatAngkaTeks_(1.5), '1,5');
       samaDengan_(formatAngkaTeks_(-2500), '-2.500');
     },
+    'susunPerhatian_: urut mendesak, shift hari ini tidak dimunculkan': function () {
+      const p = susunPerhatian_({
+        hariIni: '2026-09-28',
+        menipis: [{ stok: 0 }, { stok: 2 }, { stok: -1 }],
+        shift: [{ nama: 'Ani', hariBuka: '2026-09-27', buka: '27/09 07:00' }, { nama: 'Budi', hariBuka: '2026-09-28', buka: '28/09 07:00' }],
+        bill: [{ hari: '2026-09-28' }, { hari: '2026-09-26' }],
+      });
+      samaDengan_(p.map(function (x) { return x.tingkat + ':' + x.jenis; }),
+        ['bahaya:stok', 'peringatan:shift', 'peringatan:stok', 'peringatan:bill']);
+      samaDengan_(p[0].judul, '2 item stok habis');
+      samaDengan_(p[1].judul, 'Kasir Ani belum ditutup');
+      samaDengan_(p[3].ket, '1 di antaranya dari hari sebelumnya.');
+      samaDengan_(susunPerhatian_({ hariIni: '2026-09-28', menipis: [], shift: [], bill: [{ hari: '2026-09-28' }] })[0].tingkat, 'info');
+      samaDengan_(susunPerhatian_({ hariIni: '2026-09-28' }), []);
+    },
   };
 }

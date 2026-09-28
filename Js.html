@@ -1653,6 +1653,7 @@
 
   function renderDashboard(d) {
     renderMulaiCepat(d.penyiapan);
+    renderPerhatian(d.perhatian || []);
     const hi = d.hariIni;
     const km = d.kemarin;
     $('#db-kpi').replaceChildren(
@@ -1697,11 +1698,43 @@
       : [h('p', { class: 'bantu', style: 'margin:0', text: 'Belum ada transaksi 7 hari terakhir.' })]);
   }
 
-  $('#db-ke-stok').addEventListener('click', () => {
+  function keStokMenipis() {
     S.semuaItem = null;
     tabStok = 'menipis';
     pindahLayar('stok');
-  });
+  }
+  $('#db-ke-stok').addEventListener('click', keStokMenipis);
+
+  /**
+   * Kartu "Perlu tindakan" di puncak Beranda: satu baris per hal yang menuntut tindakan, diketuk = langsung ke tempatnya.
+   * Tingkat ditandai ikon + warna (tidak mengandalkan warna saja); daftar kosong = satu kalimat tenang.
+   */
+  const IKON_TINGKAT = {
+    bahaya: 'M12 8v5M12 16.5v.5M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
+    peringatan: 'M12 9v4M12 16.5v.5M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+    info: 'M12 11v6M12 7.5v.5M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
+  };
+  const TUJUAN_PERHATIAN = {
+    stok: keStokMenipis,
+    kas: () => pindahLayar('kas'),
+    bill: () => { pindahLayar('kasir'); bukaDaftarBill(); },
+  };
+  function renderPerhatian(daftar) {
+    const wadah = $('#db-perhatian');
+    if (!daftar.length) {
+      wadah.replaceChildren(h('p', { class: 'perhatian-beres' },
+        sv('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, sv('path', { d: 'M20 6 9 17l-5-5' })),
+        h('span', { text: 'Tidak ada yang perlu ditindaklanjuti: stok aman, kasir & bill beres.' })));
+      return;
+    }
+    wadah.replaceChildren(h('section', { class: 'kartu perhatian', 'aria-labelledby': 'judul-perhatian' },
+      h('div', { class: 'kepala-kartu' }, h('h2', { id: 'judul-perhatian', text: 'Perlu tindakan' }), h('small', { text: daftar.length + ' hal' })),
+      h('ul', { class: 'daftar-perhatian' }, ...daftar.map((p) => h('li', null,
+        h('button', { type: 'button', class: 'baris-perhatian ' + p.tingkat, onclick: TUJUAN_PERHATIAN[p.tujuan] || null },
+          sv('svg', { class: 'ikon-tingkat', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, sv('path', { d: IKON_TINGKAT[p.tingkat] || IKON_TINGKAT.info })),
+          h('span', { class: 'teks' }, h('b', { text: p.judul }), h('small', { text: p.ket })),
+          h('span', { class: 'panah', 'aria-hidden': 'true', text: '›' })))))));
+  }
   $('#db-ke-nota').addEventListener('click', () => pindahLayar('nota'));
 
   // ======================================================================

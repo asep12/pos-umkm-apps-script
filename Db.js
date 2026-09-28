@@ -3,7 +3,7 @@
  * Kolom dipetakan berdasarkan nama header, bukan nomor kolom.
  */
 
-const VERSI = '1.5.2';
+const VERSI = '1.6.0';
 
 const SHEET = Object.freeze({
   ITEM: 'Item',
@@ -66,6 +66,11 @@ function bacaTabel_(nama) {
   const sheet = ambilSheet_(nama);
   const nilai = sheet.getDataRange().getValues();
   return susunTabel_(nama, sheet, nilai[0] || [], nilai.slice(1));
+}
+
+/** Seperti bacaTabel_, tetapi null bila sheet belum dibuat (mis. Setup Awal versi baru belum dijalankan). */
+function bacaTabelBilaAda_(nama) {
+  return SpreadsheetApp.getActive().getSheetByName(nama) ? bacaTabel_(nama) : null;
 }
 
 /**

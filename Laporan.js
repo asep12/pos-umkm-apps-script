@@ -63,6 +63,9 @@ function dashboard(token) {
       perJam: r7.perJam,
       terlaris: r7.terlaris.slice(0, 5),
       menipis: { jumlah: menipis.length, daftar: menipis.slice(0, 5).map(function (i) { return itemUntukKlien_(i, true); }) },
+      perhatian: susunPerhatian_({
+        hariIni: hariIni, menipis: menipis, shift: shiftTerbukaDasbor_(tz, pengguna), bill: billTerbukaDasbor_(tz),
+      }),
       terakhir: data.trx.slice(0, 5).map(function (t) {
         return {
           noNota: t.noNota, waktu: t.waktu, total: t.total, metode: t.metode, status: t.status,
@@ -85,6 +88,36 @@ function eksporLaporan(token, rentang) {
 }
 
 // ---------- Internal ----------
+
+/** Shift berstatus Buka (untuk "Perlu tindakan"): nama kasir, hari & jam buka sebagai teks. */
+function shiftTerbukaDasbor_(tz, pengguna) {
+  const t = bacaTabelBilaAda_(SHEET.SHIFT);
+  if (!t) return [];
+  const hasil = [];
+  t.baris.forEach(function (r, i) {
+    const s = shiftDariBaris_(t, r, i);
+    if (!s.id || s.status !== 'Buka') return;
+    hasil.push({
+      nama: pengguna[s.kasir] ? pengguna[s.kasir].nama : s.kasir,
+      hariBuka: s.buka instanceof Date ? Utilities.formatDate(s.buka, tz, 'yyyy-MM-dd') : '',
+      buka: formatWaktu_(s.buka, tz),
+    });
+  });
+  return hasil;
+}
+
+/** Bill berstatus Terbuka (untuk "Perlu tindakan"): hanya hari dibuat. */
+function billTerbukaDasbor_(tz) {
+  const t = bacaTabelBilaAda_(SHEET.BILL);
+  if (!t) return [];
+  const hasil = [];
+  t.baris.forEach(function (r, i) {
+    const b = billDariBaris_(t, r, i);
+    if (!b.id || b.status !== 'Terbuka') return;
+    hasil.push({ hari: b.dibuat instanceof Date ? Utilities.formatDate(b.dibuat, tz, 'yyyy-MM-dd') : '' });
+  });
+  return hasil;
+}
 
 function hariIni_(tz) {
   return Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');

@@ -729,6 +729,26 @@ uji('[F5] Label: barcode otomatis untuk item tanpa kode, pola 95 modul; kode non
   galat(api('labelItem', tokenSiti, { ids: [lilin[0]] }), 'AKSES_DITOLAK');
 });
 
+uji('[F6] Beranda "Perlu tindakan": shift lupa ditutup & stok habis muncul, shift hari ini tidak', () => {
+  const tanpaShift = ok(api('dashboard', token)).perhatian;
+  pastikan(!tanpaShift.some((x) => x.jenis === 'shift' && /Dewi/.test(x.judul)), 'belum ada shift Dewi');
+  const tDewi = tokenKasirLain();
+  const s = ok(api('bukaShift', tDewi, { modalAwal: 10000 }));
+  pastikan(!ok(api('dashboard', token)).perhatian.some((x) => /Dewi/.test(x.judul)), 'shift hari ini = normal');
+  // Mundurkan jam buka ke kemarin -> dianggap lupa ditutup.
+  const sh = P.sheet('Shift');
+  const baris = barisData('Shift').findIndex((r) => r[0] === s.id) + 2;
+  // Date harus dari realm sandbox Apps Script (instanceof Date lintas realm bernilai false).
+  const kemarin = P.jalankan('new Date(Date.now() - 36 * 3600 * 1000)');
+  sh.getRange(baris, kolom('Shift', 'Buka') + 1).setValue(kemarin);
+  const p = ok(api('dashboard', token)).perhatian;
+  const lupa = p.find((x) => x.jenis === 'shift' && /Dewi/.test(x.judul));
+  pastikan(lupa && lupa.tujuan === 'kas' && typeof lupa.ket === 'string', 'shift lupa ditutup muncul');
+  pastikan(p.every((x, i) => i === 0 || ['bahaya', 'peringatan', 'info'].indexOf(p[i - 1].tingkat) <= ['bahaya', 'peringatan', 'info'].indexOf(x.tingkat)), 'urut mendesak');
+  ok(api('tutupShift', token, { idShift: s.id, kasFisik: 10000 }));
+  pastikan(!ok(api('dashboard', token)).perhatian.some((x) => /Dewi/.test(x.judul)), 'hilang setelah ditutup');
+});
+
 /** Token kasir kedua (dibuat sekali) untuk uji akses lintas kasir. */
 function tokenKasirLain() {
   if (tokenKasirLain.t) return tokenKasirLain.t;

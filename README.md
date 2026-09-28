@@ -4,7 +4,7 @@ Aplikasi kasir (Point of Sales) untuk UMKM retail/sembako, F&B, atau campuran.
 Database Google Sheets, backend Apps Script, tampilan Web App yang nyaman di HP/tablet.
 **Satu Spreadsheet = satu toko.**
 
-Versi: **1.5.2 (impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
+Versi: **1.6.0 (Beranda "Perlu tindakan", impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
 
 ---
 
@@ -176,6 +176,7 @@ Printer thermal Bluetooth (RawBT) direncanakan di Fase 4.
 - [ ] Buka **Bill** → **Buka & tambah/bayar** → tambah item → **Perbarui bill**; buka lagi → bayar → bill hilang dari daftar,
       sheet `Bill` berstatus Dibayar dengan No Nota, stok berkurang.
 - [ ] Dua HP membuka bill yang sama, keduanya menyimpan → yang kedua mendapat pesan "diubah di perangkat lain".
+- [ ] **Beranda › Perlu tindakan** → muncul stok menipis/habis, bill belum dibayar, dan kasir yang lupa ditutup dari hari sebelumnya; ketuk baris → langsung ke Stok › Menipis / Kas / daftar Bill.
 - [ ] **Item › Alat › Impor dari Excel / CSV** → salin beberapa baris dari Excel (dengan judul kolom) → **Pratinjau** (baris galat ditandai) → **Impor** → item baru muncul dengan barcode.
 - [ ] **Stok › Persediaan** → nilai modal di stok & per kategori.
 - [ ] **Item › Alat › Cetak label** → pilih item, salinan 2 → **Cetak label** → pratinjau cetak berisi nama, harga, barcode (uji pindai dengan kamera).

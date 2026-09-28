@@ -886,3 +886,36 @@ function formatAngkaTeks_(n) {
 function formatRupiahTeks_(n) {
   return 'Rp ' + formatAngkaTeks_(bulatUang_(n));
 }
+
+/**
+ * Daftar "Perlu tindakan" untuk Beranda: hanya hal yang menuntut tindakan pemilik, urut paling mendesak dulu.
+ * d = { hariIni:'yyyy-MM-dd', menipis:[{stok}], shift:[{nama, hariBuka, buka}], bill:[{hari}] }
+ * → [{ jenis, tingkat:'bahaya'|'peringatan'|'info', judul, ket, tujuan:'stok'|'kas'|'bill' }]
+ * Shift yang dibuka hari ini dianggap normal (sedang berjualan), jadi tidak dimunculkan.
+ */
+function susunPerhatian_(d) {
+  const hasil = [];
+  const menipis = d.menipis || [];
+  const habis = menipis.filter(function (i) { return Number(i.stok) <= 0; }).length;
+  const tipis = menipis.length - habis;
+  if (habis) {
+    hasil.push({ jenis: 'stok', tingkat: 'bahaya', judul: habis + ' item stok habis',
+      ket: 'Tidak bisa dijual sampai ada stok masuk.', tujuan: 'stok' });
+  }
+  (d.shift || []).filter(function (s) { return s.hariBuka && s.hariBuka < d.hariIni; }).forEach(function (s) {
+    hasil.push({ jenis: 'shift', tingkat: 'peringatan', judul: 'Kasir ' + s.nama + ' belum ditutup',
+      ket: 'Dibuka ' + s.buka + '. Tutup & hitung laci agar rekap kas benar.', tujuan: 'kas' });
+  });
+  if (tipis) {
+    hasil.push({ jenis: 'stok', tingkat: 'peringatan', judul: tipis + ' item hampir habis',
+      ket: 'Sudah mencapai stok minimum.', tujuan: 'stok' });
+  }
+  const bill = d.bill || [];
+  if (bill.length) {
+    const lama = bill.filter(function (b) { return b.hari && b.hari < d.hariIni; }).length;
+    hasil.push({ jenis: 'bill', tingkat: lama ? 'peringatan' : 'info', judul: bill.length + ' bill belum dibayar',
+      ket: lama ? lama + ' di antaranya dari hari sebelumnya.' : 'Pesanan meja/pelanggan yang masih terbuka.', tujuan: 'bill' });
+  }
+  const urutan = { bahaya: 0, peringatan: 1, info: 2 };
+  return hasil.sort(function (a, b) { return urutan[a.tingkat] - urutan[b.tingkat]; });
+}

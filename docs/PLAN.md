@@ -170,7 +170,18 @@ Audit memakai skill impeccable (audit), antislop-ui/-layoutmobile, emil-design-e
 - Efek hover hanya untuk perangkat ber-mouse (`@media (hover: hover)`) agar kartu tidak tampak "terpilih" setelah diketuk.
 - Modal & keranjang: `overscroll-behavior: contain`, tinggi `92dvh`; viewport `interactive-widget=resizes-content`
   agar keyboard HP tidak menutupi tombol di lembar Bayar (**perlu uji di HP Android**).
-- Ditunda (butuh persetujuan desain): Beranda "Perlu tindakan" di atas; polesan P3 (tabular-nums, garis KPI, animasi laci).
+
+## 5g. Beranda "Perlu tindakan" & polesan (selesai, v1.6.0)
+- **Backend**: `dashboard().perhatian` dari `susunPerhatian_` (murni, + tes) — stok habis (bahaya), shift dibuka sebelum hari ini
+  (lupa ditutup), stok menipis, bill terbuka (peringatan bila dari hari sebelumnya). `bacaTabelBilaAda_` di Db.js agar
+  toko yang belum menjalankan Setup Awal versi baru (sheet Shift/Bill belum ada) tetap bisa membuka Beranda.
+- **Frontend**: kartu "Perlu tindakan" di puncak Beranda (ikon + warna + teks per tingkat, baris ≥ 56 px, ketuk = ke tujuan);
+  bila kosong cukup satu kalimat tenang.
+- Polesan: angka uang `tabular-nums`; garis kiri KPI hanya untuk keadaan nyata (nota batal); laci keranjang memakai
+  kurva `--ease-laci` 260 ms.
+
+### Kriteria selesai
+Terverifikasi di emulator (`node dev/uji-e2e.js`, total 58 skenario; [F6] shift lupa ditutup) dan UI lokal (HP terang/gelap, desktop).
 
 ## 6. Fase Berikutnya (ringkas)
 - **Fase 4** (opsional): scanner kamera, RawBT, varian/topping, satuan konversi, bill terbuka, offline ringan, arsip tahunan.
