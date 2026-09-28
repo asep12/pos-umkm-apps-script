@@ -41,18 +41,22 @@ function prosesLogin_(username, pin) {
 
   const cache = CacheService.getScriptCache();
   const kunciGagal = 'gagal:' + u;
-  const gagal = Number(cache.get(kunciGagal) || 0);
-  if (gagal >= MAKS_GAGAL_LOGIN) {
-    throw galat_('TERKUNCI', 'Terlalu banyak percobaan gagal. Coba lagi dalam 10 menit.');
-  }
-
-  const user = cariPenggunaLengkap_(u);
-  // Pesan sama untuk username tidak ada / PIN salah / nonaktif agar username tidak bisa ditebak.
-  if (!user || !user.aktif || hashPin_(user.salt, p) !== user.hash) {
-    cache.put(kunciGagal, String(gagal + 1), KUNCI_LOGIN_DETIK);
-    throw galat_('VALIDASI', 'Username atau PIN salah.');
-  }
-  cache.remove(kunciGagal);
+  // Cek batas + verifikasi + catat gagal di dalam kunci: tanpa kunci, permintaan paralel membaca hitungan yang sama
+  // sehingga penyerang bisa mencoba jauh lebih dari MAKS_GAGAL_LOGIN PIN per jendela penguncian.
+  const user = denganKunci_(function () {
+    const gagal = Number(cache.get(kunciGagal) || 0);
+    if (gagal >= MAKS_GAGAL_LOGIN) {
+      throw galat_('TERKUNCI', 'Terlalu banyak percobaan gagal. Coba lagi dalam 10 menit.');
+    }
+    const calon = cariPenggunaLengkap_(u);
+    // Pesan sama untuk username tidak ada / PIN salah / nonaktif agar username tidak bisa ditebak.
+    if (!calon || !calon.aktif || hashPin_(calon.salt, p) !== calon.hash) {
+      cache.put(kunciGagal, String(gagal + 1), KUNCI_LOGIN_DETIK);
+      throw galat_('VALIDASI', 'Username atau PIN salah.');
+    }
+    cache.remove(kunciGagal);
+    return calon;
+  });
 
   const token = Utilities.getUuid();
   simpanSesi_(token, { u: user.username, r: user.role });
@@ -66,11 +70,12 @@ function prosesGantiPin_(sesi, pinLama, pinBaru) {
 
   const cache = CacheService.getScriptCache();
   const kunciGagal = 'gagal:' + sesi.u;
-  if (Number(cache.get(kunciGagal) || 0) >= MAKS_GAGAL_LOGIN) {
-    throw galat_('TERKUNCI', 'Terlalu banyak percobaan gagal. Coba lagi dalam 10 menit.');
-  }
 
   denganKunci_(function () {
+    // Di dalam kunci, sama seperti login (lihat prosesLogin_).
+    if (Number(cache.get(kunciGagal) || 0) >= MAKS_GAGAL_LOGIN) {
+      throw galat_('TERKUNCI', 'Terlalu banyak percobaan gagal. Coba lagi dalam 10 menit.');
+    }
     const t = bacaTabel_(SHEET.PENGGUNA);
     const idx = t.baris.findIndex(function (r) {
       return String(r[t.kol.Username]).trim().toLowerCase() === sesi.u;

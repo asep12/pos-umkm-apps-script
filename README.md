@@ -4,7 +4,7 @@ Aplikasi kasir (Point of Sales) untuk UMKM retail/sembako, F&B, atau campuran.
 Database Google Sheets, backend Apps Script, tampilan Web App yang nyaman di HP/tablet.
 **Satu Spreadsheet = satu toko.**
 
-Versi: **1.6.0 (Beranda "Perlu tindakan", impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
+Versi: **1.6.1 (Beranda "Perlu tindakan", impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
 
 ---
 
@@ -41,6 +41,18 @@ Simpan satu Spreadsheet **"Templat POS"** yang tidak pernah dipakai berjualan (h
 2. Di folder proyek: salin `.clasp.json.example` menjadi `.clasp.json`, lalu isi `scriptId`.
 3. Jalankan `clasp login` (sekali saja), lalu `clasp push`.
 4. Lanjutkan dari langkah 2 Cara A.
+
+### Cara C — Spreadsheet kosong, salin manual (tanpa clasp)
+1. Buat Spreadsheet baru → **Extensions › Apps Script**.
+2. Untuk setiap file `.js` di repo ini: klik **+ › Script**, beri nama yang sama tanpa `.js` (mis. `Code`), tempel isinya.
+   Untuk setiap file `.html` (`Index`, `Css`, `Js`): **+ › HTML** dengan nama yang sama.
+3. **Project Settings** → centang *Show "appsscript.json" manifest file* → buka `appsscript.json` → ganti isinya dengan
+   file `appsscript.json` dari repo ini → simpan.
+4. File di folder `dev/`, `docs/`, dan `scripts/` **tidak** perlu disalin (hanya untuk pengembangan).
+5. Lanjutkan dari langkah 2 Cara A.
+
+> **Keamanan:** URL Web App bisa dibuka siapa saja yang memegangnya dan username Admin bawaan adalah `admin`,
+> jadi **pakai PIN 6 digit untuk Admin** (bukan 4 digit). Detail: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## 2. Update kode
 

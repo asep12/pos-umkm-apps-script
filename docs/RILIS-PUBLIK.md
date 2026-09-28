@@ -12,16 +12,24 @@ Rencana membuka source code ini ke publik. **Status: repo masih privat/lokal** (
 ## Checklist sebelum repo dibuat publik
 - [ ] Buat repo GitHub (mis. `pos-umkm-apps-script`), sesuaikan email commit dengan email noreply GitHub akun Anda
       (Settings › Emails) bila berbeda; bila perlu tulis ulang riwayat dengan `git filter-repo --mailmap`.
-- [ ] Jalankan pemindaian data sensitif lagi (lihat perintah di bawah) — hasil harus kosong.
-- [ ] Pastikan `.clasp.json`, `toko.local.json`, `.claude/settings.local.json`, `.claude/skills/` tidak ter-commit (`git ls-files`).
-- [ ] Jalankan `node dev/uji-e2e.js` — semua lulus.
-- [ ] Tinjau `README.md` untuk pembaca umum: cara pasang, cara pakai, tangkapan layar (tanpa data toko asli).
+- [x] Jalankan pemindaian data sensitif lagi (lihat perintah di bawah) — hasil harus kosong.
+      28-09-2026: kosong di versi terkini **dan seluruh riwayat git**; tidak ada jalur komputer/nama pengguna Windows.
+- [x] Pastikan `.clasp.json`, `toko.local.json`, `.claude/settings.local.json`, `.claude/skills/` tidak ter-commit (`git ls-files`).
+- [x] Jalankan `node dev/uji-e2e.js` — semua lulus (58 skenario, v1.6.1).
+- [x] Tinjau `README.md` untuk pembaca umum: cara pasang (Cara C tanpa clasp), anjuran PIN Admin 6 digit.
+- [ ] (Opsional) Tangkapan layar di README — pakai data Contoh, bukan data toko asli.
+- [ ] (Opsional) Bagikan Spreadsheet "Templat POS" publik (tautan `.../copy`) agar Cara A bisa dipakai orang lain.
 - [ ] Tambahkan `CONTRIBUTING.md` sederhana (opsional) dan template issue.
 - [ ] Topik repo: `apps-script`, `google-sheets`, `pos`, `kasir`, `umkm`, `indonesia`.
 
 ```bash
 git grep -niE "belajar\.id|asephanuryana|serang|@gmail|AKfyc|scriptId\"\s*:\s*\"1" -- . ':!docs/RILIS-PUBLIK.md'
 ```
+
+## Tinjauan keamanan sebelum rilis (28-09-2026)
+- Diperbaiki: batas percobaan login bisa dilampaui dengan permintaan paralel → kini di dalam `denganKunci_` (v1.6.1).
+- Dicek: tidak ada `innerHTML` untuk data dinamis; teks ke sheet dilindungi `amanSel_`; hash/salt tidak pernah dikirim ke klien;
+  galat server tidak membocorkan detail teknis; fungsi internal berakhiran `_`.
 
 ## Yang TIDAK boleh masuk repo
 - ID skrip/deployment toko (`.clasp.json`, `toko.local.json`), data Spreadsheet toko, tangkapan layar berisi data asli.

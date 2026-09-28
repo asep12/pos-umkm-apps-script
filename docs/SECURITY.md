@@ -16,6 +16,11 @@
 - Username + PIN 4–6 digit. Simpan `SHA-256(salt + PIN)` (`Utilities.computeDigest`), salt acak per pengguna (`Utilities.getUuid()`).
 - PIN pendek mudah di-brute-force **jika hash bocor** → Spreadsheet tidak boleh dibagikan ke kasir; kasir hanya diberi URL Web App.
 - Batas percobaan: 5 gagal per username / 10 menit → `TERKUNCI`. Pesan gagal login sama untuk username salah maupun PIN salah.
+  Cek batas, verifikasi, dan pencatatan gagal berjalan **di dalam `denganKunci_`** (login & ganti PIN): tanpa kunci,
+  permintaan paralel membaca hitungan yang sama sehingga batas 5 bisa dilampaui berkali-kali lipat.
+- Username Admin bawaan `admin` mudah ditebak dan URL Web App bisa diakses siapa saja yang memegangnya, jadi kekuatan
+  PIN Admin adalah pertahanan utama: dengan 5 tebakan/10 menit, PIN 4 digit (10.000 kemungkinan) jauh lebih lemah
+  daripada 6 digit (1.000.000). Setup Awal membuat PIN Admin acak 6 digit.
 - Admin default dibuat Setup Awal: username `admin`, PIN **acak 6 digit** ditampilkan sekali di dialog Setup, `Ganti PIN = Ya`.
 - PIN baru tidak boleh sama dengan PIN lama dan tidak boleh pola lemah (`000000`, `123456`, semua digit sama).
 
