@@ -4,7 +4,20 @@ Aplikasi kasir (Point of Sales) untuk UMKM retail/sembako, F&B, atau campuran.
 Database Google Sheets, backend Apps Script, tampilan Web App yang nyaman di HP/tablet.
 **Satu Spreadsheet = satu toko.**
 
-Versi: **1.6.1 (Beranda "Perlu tindakan", impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
+Versi: **1.6.2 (Beranda "Perlu tindakan", impor item, nilai persediaan, label barcode, tampilan HP & aksesibilitas dipoles)**. Rencana fase ada di [docs/PLAN.md](docs/PLAN.md).
+
+<p>
+  <img src="docs/gambar/kasir-desktop.png" alt="Layar kasir di laptop: kartu produk dan keranjang" width="640">
+</p>
+<p>
+  <img src="docs/gambar/kasir-hp.png" alt="Layar kasir di HP" width="200">
+  <img src="docs/gambar/beranda-hp-gelap.png" alt="Beranda mode gelap di HP dengan kartu Perlu tindakan" width="200">
+</p>
+<p>
+  <img src="docs/gambar/laporan-desktop.png" alt="Laporan penjualan: omzet, laba, grafik per hari" width="640">
+</p>
+
+<sub>Tangkapan layar memakai data uji fiktif dari server lokal (<code>dev/server.js</code>) dan POS › Contoh Data.</sub>
 
 ---
 
@@ -52,7 +65,7 @@ Simpan satu Spreadsheet **"Templat POS"** yang tidak pernah dipakai berjualan (h
 5. Lanjutkan dari langkah 2 Cara A.
 
 > **Keamanan:** URL Web App bisa dibuka siapa saja yang memegangnya dan username Admin bawaan adalah `admin`,
-> jadi **pakai PIN 6 digit untuk Admin** (bukan 4 digit). Detail: [docs/SECURITY.md](docs/SECURITY.md).
+> karena itu **PIN Admin wajib 6 digit** (Admin lama ber-PIN pendek diminta mengganti saat login). Detail: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## 2. Update kode
 

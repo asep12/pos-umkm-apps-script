@@ -183,5 +183,10 @@ Audit memakai skill impeccable (audit), antislop-ui/-layoutmobile, emil-design-e
 ### Kriteria selesai
 Terverifikasi di emulator (`node dev/uji-e2e.js`, total 58 skenario; [F6] shift lupa ditutup) dan UI lokal (HP terang/gelap, desktop).
 
+## 5h. Persiapan rilis publik (v1.6.1–1.6.2)
+- Batas percobaan login/ganti PIN di dalam `denganKunci_` (sebelumnya bisa dilampaui dengan permintaan paralel).
+- PIN Admin wajib 6 digit (`panjangPinMinimal_`), Admin lama dipaksa ganti; Kasir tetap 4–6 digit. Tes e2e: 59 skenario.
+- README: Cara C tanpa clasp, tangkapan layar (`docs/gambar/`). Pemindaian data sensitif seluruh riwayat git: bersih.
+
 ## 6. Fase Berikutnya (ringkas)
 - **Fase 4** (opsional): scanner kamera, RawBT, varian/topping, satuan konversi, bill terbuka, offline ringan, arsip tahunan.

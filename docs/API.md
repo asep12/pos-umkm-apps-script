@@ -36,10 +36,10 @@ Role: `P` = publik (tanpa token), `K` = Kasir & Admin, `A` = Admin saja. Fase = 
 
 | Fungsi | Role | Fase | Input → Output (`data`) |
 |---|---|---|---|
-| `login(username, pin)` | P | 1 | → `{token, nama, role, wajibGantiPin}` |
+| `login(username, pin)` | P | 1 | → `{token, nama, role, wajibGantiPin}`. Admin ber-PIN < 6 digit → `wajibGantiPin: true` (ditandai di sheet) |
 | `logout(token)` | K | 1 | → `true` |
 | `infoSesi(token)` | K | 1 | → `{username, nama, role, wajibGantiPin}` |
-| `gantiPin(token, pinLama, pinBaru)` * | K | 1 | → `true` (satu-satunya fungsi yang lolos saat wajib ganti PIN) |
+| `gantiPin(token, pinLama, pinBaru)` * | K | 1 | → `true` (satu-satunya fungsi yang lolos saat wajib ganti PIN). PIN baru: Kasir 4–6 digit, Admin 6 digit |
 | `muatAwal(token)` * | K | 1 | → `{toko, sesi, items, kategori, jumlahMenipis, shiftAktif}`; items = aktif & bukan Bahan; `jumlahMenipis` 0 untuk Kasir; `shiftAktif` = `{id, buka}` atau null |
 | `getPengaturan(token)` | K | 1 | → `{nama, alamat, telepon, footer, lebarStruk, mode, pajakPersen, prefixNota, izinkanStokMinus, zonaWaktu, versi}` |
 | `simpanPengaturan(token, obj)` | A | 2 | bentuk sama dengan `getPengaturan` (tanpa `versi`) → pengaturan baru; langsung berlaku (cache di-invalidasi) |

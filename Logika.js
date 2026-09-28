@@ -53,6 +53,14 @@ function validPin_(pin) {
   return typeof pin === 'string' && /^\d{4,6}$/.test(pin);
 }
 
+/**
+ * Panjang PIN minimal per peran. Admin 6 digit: username bawaan "admin" mudah ditebak dan URL Web App bisa dibuka
+ * siapa saja yang memegangnya, jadi PIN Admin adalah pertahanan utama (lihat docs/SECURITY.md).
+ */
+function panjangPinMinimal_(role) {
+  return role === 'Admin' ? 6 : 4;
+}
+
 /** PIN lemah: semua digit sama, atau berurutan naik/turun (1234, 654321). */
 function pinLemah_(pin) {
   if (/^(\d)\1+$/.test(pin)) return true;

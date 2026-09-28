@@ -81,6 +81,23 @@ uji('Login admin -> wajib ganti PIN sebelum memakai aplikasi', () => {
   pastikan(!JSON.stringify(barisData('Pengguna')).includes('481937'), 'PIN tidak disimpan polos');
 });
 
+uji('Admin wajib PIN 6 digit; Admin lama ber-PIN 4 digit dipaksa ganti saat login', () => {
+  galat(api('gantiPin', token, '481937', '2580'), 'VALIDASI'); // Admin tidak boleh 4 digit
+  // Simulasi Admin dari versi lama yang PIN-nya 4 digit: tulis salt + hash langsung ke sheet.
+  const sh = P.sheet('Pengguna');
+  const baris = barisData('Pengguna').findIndex((r) => r[kolom('Pengguna', 'Username')] === 'admin') + 2;
+  sh.getRange(baris, kolom('Pengguna', 'Salt') + 1).setValue('salt-uji');
+  sh.getRange(baris, kolom('Pengguna', 'PIN Hash') + 1).setValue(P.jalankan("hashPin_('salt-uji', '2580')"));
+  P.jalankan("naikkanVersi_('user')");
+  const d = ok(api('login', 'admin', '2580'));
+  sama(d.wajibGantiPin, true, 'wajib ganti');
+  galat(api('muatAwal', d.token), 'WAJIB_GANTI_PIN');
+  sama(barisData('Pengguna')[baris - 2][kolom('Pengguna', 'Ganti PIN')], 'Ya', 'tercatat di sheet');
+  galat(api('gantiPin', d.token, '2580', '1357'), 'VALIDASI');
+  ok(api('gantiPin', d.token, '2580', '481937'));
+  ok(api('muatAwal', d.token));
+});
+
 uji('Token palsu / kosong ditolak dengan SESI_HABIS', () => {
   galat(api('muatAwal', 'bukan-token'), 'SESI_HABIS');
   galat(api('muatAwal', '00000000-0000-0000-0000-000000000000'), 'SESI_HABIS');

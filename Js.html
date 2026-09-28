@@ -330,13 +330,20 @@
     $('#login-username').focus();
   }
 
+  /** Peran untuk aturan PIN: dari sesi, atau dari hasil login bila aplikasi belum dimuat (wajib ganti PIN). */
+  const pinAdmin = () => ((S.sesi && S.sesi.role) || S.peranLogin) === 'Admin';
+
   function tampilGantiPin(wajib) {
     S.pinWajib = wajib;
     tampilSatu('#layar-pin');
     $('#form-pin').reset();
     $('#pin-pesan').textContent = '';
+    const admin = pinAdmin();
+    $('#label-pin-baru').textContent = admin ? 'PIN baru (6 digit)' : 'PIN baru (4–6 digit)';
+    $('#pin-baru').setAttribute('minlength', admin ? '6' : '4');
     $('#pin-info').textContent = wajib
-      ? 'Demi keamanan, ganti PIN sementara Anda sebelum melanjutkan.'
+      ? (admin ? 'Demi keamanan, PIN Admin wajib 6 digit. Ganti PIN Anda sebelum melanjutkan.'
+        : 'Demi keamanan, ganti PIN sementara Anda sebelum melanjutkan.')
       : 'Masukkan PIN lama dan PIN baru Anda.';
     $('#pin-batal').hidden = wajib;
     $('#pin-lama').focus();
@@ -365,6 +372,7 @@
       try {
         const d = await panggil('login', [username, pin]);
         S.token = d.token;
+        S.peranLogin = d.role;
         penyimpan.taruh('pos_token', d.token);
         if (d.wajibGantiPin) tampilGantiPin(true);
         else await masukAplikasi();
@@ -382,6 +390,7 @@
     const pesan = $('#pin-pesan');
     pesan.textContent = '';
     if (!/^\d{4,6}$/.test(baru)) { galatKolom(pesan, $('#pin-baru'), 'PIN baru harus 4–6 digit angka.'); return; }
+    if (pinAdmin() && baru.length < 6) { galatKolom(pesan, $('#pin-baru'), 'PIN Admin harus 6 digit angka.'); return; }
     if (baru !== $('#pin-ulang').value.trim()) { galatKolom(pesan, $('#pin-ulang'), 'Ulangi PIN baru tidak sama.'); return; }
     denganTombol(e.submitter || $('#form-pin button[type=submit]'), 'Menyimpan…', async () => {
       try {

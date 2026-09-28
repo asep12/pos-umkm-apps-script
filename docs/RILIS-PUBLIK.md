@@ -17,8 +17,13 @@ Rencana membuka source code ini ke publik. **Status: repo masih privat/lokal** (
 - [x] Pastikan `.clasp.json`, `toko.local.json`, `.claude/settings.local.json`, `.claude/skills/` tidak ter-commit (`git ls-files`).
 - [x] Jalankan `node dev/uji-e2e.js` — semua lulus (58 skenario, v1.6.1).
 - [x] Tinjau `README.md` untuk pembaca umum: cara pasang (Cara C tanpa clasp), anjuran PIN Admin 6 digit.
-- [ ] (Opsional) Tangkapan layar di README — pakai data Contoh, bukan data toko asli.
-- [ ] (Opsional) Bagikan Spreadsheet "Templat POS" publik (tautan `.../copy`) agar Cara A bisa dipakai orang lain.
+- [x] Tangkapan layar di README (`docs/gambar/`) — data uji fiktif, tanpa data toko asli.
+- [ ] (Opsional) Bagikan Spreadsheet "Templat POS" publik agar Cara A bisa dipakai orang lain:
+      1. Buat Spreadsheet **baru & kosong** (bukan salinan toko yang pernah dipakai berjualan), pasang kode (Cara B/C),
+         **jangan** jalankan Setup Awal (agar tidak ada hash PIN/akun di dalamnya).
+      2. Share › *Anyone with the link* › **Viewer**.
+      3. Ambil tautannya, ganti akhiran `/edit...` menjadi `/copy`, taruh di README Cara A.
+      4. Periksa: tidak ada sheet berisi data, tidak ada deployment Web App aktif di templat.
 - [ ] Tambahkan `CONTRIBUTING.md` sederhana (opsional) dan template issue.
 - [ ] Topik repo: `apps-script`, `google-sheets`, `pos`, `kasir`, `umkm`, `indonesia`.
 
@@ -27,6 +32,7 @@ git grep -niE "belajar\.id|asephanuryana|serang|@gmail|AKfyc|scriptId\"\s*:\s*\"
 ```
 
 ## Tinjauan keamanan sebelum rilis (28-09-2026)
+- PIN Admin wajib 6 digit (v1.6.2); Admin lama ber-PIN pendek ditandai wajib ganti saat login.
 - Diperbaiki: batas percobaan login bisa dilampaui dengan permintaan paralel → kini di dalam `denganKunci_` (v1.6.1).
 - Dicek: tidak ada `innerHTML` untuk data dinamis; teks ke sheet dilindungi `amanSel_`; hash/salt tidak pernah dikirim ke klien;
   galat server tidak membocorkan detail teknis; fungsi internal berakhiran `_`.

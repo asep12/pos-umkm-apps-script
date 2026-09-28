@@ -83,6 +83,7 @@ function daftarKasusTes_() {
       samaDengan_(pinLemah_('481937'), false);
       samaDengan_(validPin_('12a4'), false);
       samaDengan_(validPin_('1234567'), false);
+      samaDengan_([panjangPinMinimal_('Admin'), panjangPinMinimal_('Kasir')], [6, 4]);
     },
     'idItemBerikut_ melanjutkan nomor terbesar': function () {
       samaDengan_(idItemBerikut_([]), 'ITM-0001');

@@ -13,7 +13,8 @@
 - `jalankanTes`: hanya fungsi murni, tidak menulis sheet.
 
 ## 3. Autentikasi
-- Username + PIN 4–6 digit. Simpan `SHA-256(salt + PIN)` (`Utilities.computeDigest`), salt acak per pengguna (`Utilities.getUuid()`).
+- Username + PIN: Kasir 4–6 digit, **Admin wajib 6 digit** (`panjangPinMinimal_`); Admin dengan PIN lebih pendek
+  ditandai `Ganti PIN = Ya` saat login berhasil sehingga wajib menggantinya. Simpan `SHA-256(salt + PIN)` (`Utilities.computeDigest`), salt acak per pengguna (`Utilities.getUuid()`).
 - PIN pendek mudah di-brute-force **jika hash bocor** → Spreadsheet tidak boleh dibagikan ke kasir; kasir hanya diberi URL Web App.
 - Batas percobaan: 5 gagal per username / 10 menit → `TERKUNCI`. Pesan gagal login sama untuk username salah maupun PIN salah.
   Cek batas, verifikasi, dan pencatatan gagal berjalan **di dalam `denganKunci_`** (login & ganti PIN): tanpa kunci,

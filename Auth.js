@@ -55,6 +55,11 @@ function prosesLogin_(username, pin) {
       throw galat_('VALIDASI', 'Username atau PIN salah.');
     }
     cache.remove(kunciGagal);
+    // Admin lama dengan PIN < 6 digit (sebelum aturan 6 digit): wajib ganti PIN, tercatat di sheet.
+    if (p.length < panjangPinMinimal_(calon.role) && !calon.gantiPin) {
+      tandaiWajibGantiPin_(calon.username);
+      calon.gantiPin = true;
+    }
     return calon;
   });
 
@@ -65,6 +70,7 @@ function prosesLogin_(username, pin) {
 
 function prosesGantiPin_(sesi, pinLama, pinBaru) {
   if (!validPin_(pinBaru)) throw galat_('VALIDASI', 'PIN baru harus 4–6 digit angka.');
+  if (pinBaru.length < panjangPinMinimal_(sesi.r)) throw galat_('VALIDASI', 'PIN Admin harus 6 digit angka.');
   if (pinBaru === pinLama) throw galat_('VALIDASI', 'PIN baru tidak boleh sama dengan PIN lama.');
   if (pinLemah_(pinBaru)) throw galat_('VALIDASI', 'PIN terlalu mudah ditebak (angka sama/berurutan). Pilih PIN lain.');
 
@@ -93,6 +99,15 @@ function prosesGantiPin_(sesi, pinLama, pinBaru) {
   });
   cache.remove(kunciGagal);
   return true;
+}
+
+/** Set kolom "Ganti PIN" = Ya. Dipanggil di dalam denganKunci_. */
+function tandaiWajibGantiPin_(username) {
+  const t = bacaTabel_(SHEET.PENGGUNA);
+  const idx = t.baris.findIndex(function (r) { return String(r[t.kol.Username]).trim().toLowerCase() === username; });
+  if (idx === -1) return;
+  tulisBaris_(t, idx, keBaris_(t, { 'Ganti PIN': 'Ya' }, t.baris[idx]));
+  naikkanVersi_('user');
 }
 
 function hashPin_(salt, pin) {

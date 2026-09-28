@@ -153,7 +153,7 @@ Semua fungsi publik menerima `token` sesi sebagai argumen pertama (kecuali `logi
 
 ## 8. Autentikasi dan Keamanan
 
-- Login **username + PIN** (4-6 digit). Simpan `SHA-256(salt + PIN)` dengan `Utilities.computeDigest`; PIN tidak pernah disimpan polos.
+- Login **username + PIN** (Kasir 4–6 digit, **Admin wajib 6 digit**; Admin lama dengan PIN lebih pendek diminta ganti saat login). Simpan `SHA-256(salt + PIN)` dengan `Utilities.computeDigest`; PIN tidak pernah disimpan polos.
 - Sesi: token acak (`Utilities.getUuid()`) disimpan di `CacheService` (masa berlaku 6 jam, diperpanjang saat aktif) dengan isi username dan role. Klien menyimpan token di `sessionStorage`.
 - Setiap fungsi backend memverifikasi token dan role di server. Fungsi Admin-only: laporan, void, kelola pengguna, simpan pengaturan, ubah harga.
 - Batasi percobaan login: 5 kali salah per username dalam 10 menit lalu kunci sementara (hitung di `CacheService`).
