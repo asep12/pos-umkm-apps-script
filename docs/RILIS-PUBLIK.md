@@ -1,6 +1,7 @@
 # RILIS-PUBLIK.md
 
-Rencana membuka source code ini ke publik. **Status: repo masih privat/lokal** (belum ada remote).
+Rencana membuka source code ini ke publik. **Status (28-09-2026): repo GitHub PRIVATE** `asep12/pos-umkm-apps-script`
+(dibuat lewat akun asep12; commit tertaut ke akun GitHub asep94 milik pembuat). Menjadi public: Settings › Change visibility.
 
 ## Keputusan (27-09-2026)
 - **Lisensi:** MIT (`LICENSE`). Siapa pun boleh memakai, mengubah, dan mendistribusikan, **wajib menyertakan** pemberitahuan
@@ -10,8 +11,8 @@ Rencana membuka source code ini ke publik. **Status: repo masih privat/lokal** (
 - **Identitas commit:** `asep94 <asep94@users.noreply.github.com>` (email noreply; email asli tidak masuk riwayat).
 
 ## Checklist sebelum repo dibuat publik
-- [ ] Buat repo GitHub (mis. `pos-umkm-apps-script`), sesuaikan email commit dengan email noreply GitHub akun Anda
-      (Settings › Emails) bila berbeda; bila perlu tulis ulang riwayat dengan `git filter-repo --mailmap`.
+- [x] Buat repo GitHub `pos-umkm-apps-script` (private), topik terpasang, commit tertaut ke akun asep94.
+- [ ] (Opsional) Pindahkan repo ke akun asep94: Settings › Transfer ownership, agar URL-nya `github.com/asep94/...`.
 - [x] Jalankan pemindaian data sensitif lagi (lihat perintah di bawah) — hasil harus kosong.
       28-09-2026: kosong di versi terkini **dan seluruh riwayat git**; tidak ada jalur komputer/nama pengguna Windows.
 - [x] Pastikan `.clasp.json`, `toko.local.json`, `.claude/settings.local.json`, `.claude/skills/` tidak ter-commit (`git ls-files`).
@@ -25,7 +26,7 @@ Rencana membuka source code ini ke publik. **Status: repo masih privat/lokal** (
       3. Ambil tautannya, ganti akhiran `/edit...` menjadi `/copy`, taruh di README Cara A.
       4. Periksa: tidak ada sheet berisi data, tidak ada deployment Web App aktif di templat.
 - [ ] Tambahkan `CONTRIBUTING.md` sederhana (opsional) dan template issue.
-- [ ] Topik repo: `apps-script`, `google-sheets`, `pos`, `kasir`, `umkm`, `indonesia`.
+- [x] Topik repo: `apps-script`, `google-sheets`, `pos`, `kasir`, `umkm`, `indonesia`.
 
 ```bash
 git grep -niE "belajar\.id|asephanuryana|serang|@gmail|AKfyc|scriptId\"\s*:\s*\"1" -- . ':!docs/RILIS-PUBLIK.md'
