@@ -22,7 +22,7 @@ function doGet() {
     .evaluate()
     .setTitle(String(judul))
     // Tag meta viewport di dalam HTML diabaikan HtmlService, jadi wajib lewat addMetaTag.
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content');
 }
 
 function include(nama) {

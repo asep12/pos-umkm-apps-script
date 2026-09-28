@@ -191,9 +191,30 @@
     else toast(pesan, 'galat');
   }
 
+  /** Galat validasi di sisi klien: tampilkan pesan, tandai kolomnya (aria-invalid + aria-describedby), lalu fokuskan. */
+  function galatKolom(elPesan, kolom, teks) {
+    elPesan.textContent = teks;
+    if (!kolom) return;
+    kolom.setAttribute('aria-invalid', 'true');
+    if (elPesan.id) kolom.setAttribute('aria-describedby', elPesan.id);
+    kolom.focus();
+  }
+  /** Tanda galat hilang begitu kolomnya diubah. */
+  ['input', 'change'].forEach((jenis) => document.addEventListener(jenis, (e) => {
+    const el = e.target;
+    if (el && el.getAttribute && el.getAttribute('aria-invalid') === 'true') {
+      el.removeAttribute('aria-invalid');
+      el.removeAttribute('aria-describedby');
+    }
+  }, true));
+
   const isAdmin = () => S.sesi && S.sesi.role === 'Admin';
   const modeRetail = () => S.toko && S.toko.mode === 'Retail';
   const kosong = (teks) => h('div', { class: 'kosong', text: teks });
+  /** Keadaan gagal memuat: sebut apa yang gagal + satu tombol untuk mencoba lagi (tanpa harus ke menu akun). */
+  const galatMuat = (g, cadangan, ulang) => h('div', { class: 'kosong galat-muat', role: 'alert' },
+    h('p', { text: (g && g.pesan) || cadangan }),
+    h('button', { type: 'button', class: 'tombol kecil', text: 'Coba lagi', onclick: () => ulang() }));
   /** Seperti replaceChildren, tetapi membuang null/false (replaceChildren menjadikannya teks "null"). */
   const isiWadah = (wadah, ...anak) => wadah.replaceChildren(...anak.flat().filter((a) => a !== null && a !== undefined && a !== false));
   // ---------- Kerangka memuat (skeleton) ----------
@@ -360,8 +381,8 @@
     const baru = $('#pin-baru').value.trim();
     const pesan = $('#pin-pesan');
     pesan.textContent = '';
-    if (!/^\d{4,6}$/.test(baru)) { pesan.textContent = 'PIN baru harus 4–6 digit angka.'; return; }
-    if (baru !== $('#pin-ulang').value.trim()) { pesan.textContent = 'Ulangi PIN baru tidak sama.'; return; }
+    if (!/^\d{4,6}$/.test(baru)) { galatKolom(pesan, $('#pin-baru'), 'PIN baru harus 4–6 digit angka.'); return; }
+    if (baru !== $('#pin-ulang').value.trim()) { galatKolom(pesan, $('#pin-ulang'), 'Ulangi PIN baru tidak sama.'); return; }
     denganTombol(e.submitter || $('#form-pin button[type=submit]'), 'Menyimpan…', async () => {
       try {
         await api('gantiPin', lama, baru);
@@ -492,6 +513,7 @@
     $('#sb-avatar').textContent = inisial(namaUser);
     $('#akun-avatar').textContent = inisial(namaUser);
     $('#akun-label').textContent = namaUser;
+    $('#tombol-akun').setAttribute('aria-label', 'Akun: ' + namaUser);
     $('#akun-nama').textContent = namaUser;
     $('#akun-role').textContent = S.sesi.username + ' · ' + S.sesi.role;
     $$('[data-admin]').forEach((el) => { el.hidden = !isAdmin(); });
@@ -970,7 +992,7 @@
     const bayar = S.metode === 'Tunai' ? parseUang($('#bayar-nilai').value) : r.total;
     const pesan = $('#bayar-pesan');
     pesan.textContent = '';
-    if (S.metode === 'Tunai' && bayar < r.total) { pesan.textContent = 'Uang diterima kurang dari total.'; return; }
+    if (S.metode === 'Tunai' && bayar < r.total) { galatKolom(pesan, $('#bayar-nilai'), 'Uang diterima kurang dari total.'); return; }
     const data = {
       items: S.keranjang.map((b) => ({ idItem: b.idItem, qty: b.qty })),
       diskon: { jenis: r.jenis, nilai: r.nilai },
@@ -1133,7 +1155,7 @@
         n.status === 'Batal' ? h('div', null, h('span', { class: 'lencana batal', text: 'Batal' })) : null))),
       d.penuh ? h('p', { class: 'bantu', text: 'Menampilkan 300 transaksi terbaru. Persempit rentang tanggal untuk melihat lainnya.' }) : null);
     } catch (g) {
-      wadah.replaceChildren(kosong((g && g.pesan) || 'Gagal memuat transaksi.'));
+      wadah.replaceChildren(galatMuat(g, 'Gagal memuat transaksi.', tampilTransaksi));
     }
   }
 
@@ -1169,7 +1191,7 @@
     const alasan = $('#void-alasan').value.trim();
     const pesan = $('#void-pesan');
     pesan.textContent = '';
-    if (!alasan) { pesan.textContent = 'Isi alasan pembatalan.'; return; }
+    if (!alasan) { galatKolom(pesan, $('#void-alasan'), 'Isi alasan pembatalan.'); return; }
     if (!confirm('Batalkan nota ' + S.notaDilihat.noNota + '? Stok akan dikembalikan.')) return;
     denganTombol(e.currentTarget, 'Memproses…', async () => {
       try {
@@ -1264,8 +1286,8 @@
     const idItem = $('#sm-item').value;
     const qty = parseQty($('#sm-qty').value);
     const hargaTeks = $('#sm-harga').value.trim();
-    if (!idItem) { pesan.textContent = 'Pilih item terlebih dahulu.'; return; }
-    if (!(qty > 0)) { pesan.textContent = 'Isi qty lebih dari 0.'; return; }
+    if (!idItem) { galatKolom(pesan, $('#sm-item'), 'Pilih item terlebih dahulu.'); return; }
+    if (!(qty > 0)) { galatKolom(pesan, $('#sm-qty'), 'Isi qty lebih dari 0.'); return; }
     denganTombol(e.submitter || $('#form-masuk button[type=submit]'), 'Menyimpan…', async () => {
       try {
         const r = await api('stokMasuk', {
@@ -1397,7 +1419,7 @@
       isiWadah(wadah, d.baris.map(kartuLog),
         d.penuh ? h('p', { class: 'bantu', text: 'Menampilkan 200 catatan terbaru. Persempit filter untuk melihat lainnya.' }) : null);
     } catch (g) {
-      wadah.replaceChildren(kosong((g && g.pesan) || 'Gagal memuat riwayat.'));
+      wadah.replaceChildren(galatMuat(g, 'Gagal memuat riwayat stok.', tampilRiwayat));
     }
   }
 
@@ -1437,7 +1459,7 @@
           },
         }))));
     } catch (g) {
-      wadah.replaceChildren(kosong((g && g.pesan) || 'Gagal memuat.'));
+      wadah.replaceChildren(galatMuat(g, 'Gagal memuat stok menipis.', tampilMenipis));
     }
   }
 
@@ -1624,7 +1646,8 @@
       S.dasbor = await api('dashboard');
       if (layarAktif === 'dashboard') renderDashboard(S.dasbor);
     } catch (g) {
-      tanganiGalat(g);
+      if (S.dasbor) tanganiGalat(g);
+      else $('#db-kpi').replaceChildren(galatMuat(g, 'Gagal memuat ringkasan hari ini.', bukaDashboard));
     }
   }
 
@@ -1737,7 +1760,7 @@
       S.laporan = await api('laporanRingkas', { dari: $('#lp-dari').value, sampai: $('#lp-sampai').value });
       if (layarAktif === 'laporan') renderLaporan(S.laporan);
     } catch (g) {
-      $('#lp-kpi').replaceChildren(kosong((g && g.pesan) || 'Gagal memuat laporan.'));
+      $('#lp-kpi').replaceChildren(galatMuat(g, 'Gagal memuat laporan.', () => tampilLaporan()));
     }
   }
 
@@ -1837,7 +1860,7 @@
       renderIndikatorShift();
       if (layarAktif === 'kas') renderShift();
     } catch (g) {
-      $('#ks-status').replaceChildren(kosong((g && g.pesan) || 'Gagal memuat status kasir.'));
+      $('#ks-status').replaceChildren(galatMuat(g, 'Gagal memuat status kasir.', bukaKas));
     }
     if (isAdmin()) tampilRiwayatKas();
   }
@@ -1934,7 +1957,7 @@
     const pesan = $('#kas-pesan');
     pesan.textContent = '';
     const jumlah = parseUang($('#kas-jumlah').value);
-    if (!jumlah) { pesan.textContent = 'Isi jumlah lebih dari 0.'; return; }
+    if (!jumlah) { galatKolom(pesan, $('#kas-jumlah'), 'Isi jumlah lebih dari 0.'); return; }
     denganTombol(e.submitter || $('#form-kas button[type=submit]'), 'Menyimpan…', async () => {
       try {
         const k = await api('catatKas', { jenis: kasSt.jenis, kategori: $('#kas-kategori').value, jumlah: jumlah, keterangan: $('#kas-ket').value });
@@ -2102,7 +2125,7 @@
           kas.baris.map((k) => [k.tanggal, k.jenis, k.kategori, k.keterangan || '—', k.namaUser, (k.jenis === 'Masuk' ? '+' : '−') + rupiah(k.jumlah)]))
         : h('p', { class: 'bantu', style: 'margin:0', text: 'Belum ada catatan kas pada rentang ini.' }));
     } catch (g) {
-      $('#ks-shift').replaceChildren(kosong((g && g.pesan) || 'Gagal memuat.'));
+      $('#ks-shift').replaceChildren(galatMuat(g, 'Gagal memuat riwayat shift & kas.', tampilRiwayatKas));
     }
   }
   $('#ks-tampil').addEventListener('click', tampilRiwayatKas);
@@ -2302,6 +2325,7 @@
     const el = $('#jumlah-bill');
     el.hidden = !n;
     el.textContent = String(n);
+    $('#tombol-bill').setAttribute('aria-label', n ? 'Bill terbuka, ' + n + ' bill' : 'Bill terbuka');
   }
 
   async function segarkanBill() {
@@ -2378,11 +2402,11 @@
     const terpakai = daftarBill.map((b) => b.nama.toLowerCase());
     const meja = [];
     for (let i = 1; meja.length < 8 && i <= 30; i++) if (terpakai.indexOf(('meja ' + i)) === -1) meja.push('Meja ' + i);
-    $('#sb-cepat').replaceChildren(...meja.map((m) => h('button', { type: 'button', class: 'chip', text: m, onclick: () => { $('#sb-nama').value = m; } })));
+    $('#sb-cepat').replaceChildren(...meja.map((m) => h('button', { type: 'button', class: 'chip', text: m, onclick: () => { $('#bill-nama').value = m; } })));
     $('#saran-meja').replaceChildren(...meja.map((m) => h('option', { value: m })));
     $('#sb-catatan').value = $('#catatan-trx').value;
     $('#modal-simpan-bill').hidden = false;
-    $('#sb-nama').focus();
+    $('#bill-nama').focus();
   }
 
   function kirimBill(nama, catatan, tombol) {
@@ -2412,8 +2436,8 @@
   $('#tutup-simpan-bill').addEventListener('click', () => { $('#modal-simpan-bill').hidden = true; });
   $('#form-simpan-bill').addEventListener('submit', (e) => {
     e.preventDefault();
-    const nama = $('#sb-nama').value.trim();
-    if (!nama) { $('#sb-pesan').textContent = 'Isi meja atau nama pelanggan.'; return; }
+    const nama = $('#bill-nama').value.trim();
+    if (!nama) { galatKolom($('#sb-pesan'), $('#bill-nama'), 'Isi meja atau nama pelanggan.'); return; }
     kirimBill(nama, $('#sb-catatan').value, e.submitter || $('#form-simpan-bill button[type=submit]'));
   });
   $('#lepas-bill').addEventListener('click', () => {
@@ -2474,7 +2498,7 @@
     const pesan = $('#hm-pesan');
     pesan.textContent = '';
     const data = dataHargaMassal();
-    if (!Number.isFinite(data.nilai) || !data.nilai) { pesan.textContent = 'Isi besar perubahan (boleh minus untuk menurunkan).'; return; }
+    if (!Number.isFinite(data.nilai) || !data.nilai) { galatKolom(pesan, $('#hm-nilai'), 'Isi besar perubahan (boleh minus untuk menurunkan).'); return; }
     denganTombol(e.currentTarget, 'Menghitung…', async () => {
       try {
         const r = await api('ubahHargaMassal', Object.assign({ pratinjau: true }, data));
@@ -2617,7 +2641,7 @@
   $('#im-pratinjau').addEventListener('click', (e) => {
     const pesan = $('#im-pesan');
     pesan.textContent = '';
-    if (!$('#im-teks').value.trim()) { pesan.textContent = 'Tempel data tabel atau pilih file CSV dulu.'; return; }
+    if (!$('#im-teks').value.trim()) { galatKolom(pesan, $('#im-teks'), 'Tempel data tabel atau pilih file CSV dulu.'); return; }
     denganTombol(e.currentTarget, 'Memeriksa…', async () => {
       try {
         const r = await api('imporItem', dataImpor(true));
@@ -2665,7 +2689,7 @@
       daftarBar($('#ps-kategori'), r.perKategori.map((k) => ({ nama: k.kategori, nilai: k.nilai, catatan: angka(k.jumlahItem) + ' item' })),
         rupiah, 'Belum ada stok bernilai.');
     } catch (g) {
-      $('#ps-kpi').replaceChildren(kosong((g && g.pesan) || 'Gagal memuat.'));
+      $('#ps-kpi').replaceChildren(galatMuat(g, 'Gagal memuat nilai persediaan.', tampilPersediaan));
     }
   }
 
@@ -2790,7 +2814,7 @@
     const pesan = $('#at-pesan');
     pesan.textContent = '';
     const pajak = parseQty($('#at-pajak').value || '0');
-    if (!Number.isFinite(pajak)) { pesan.textContent = 'Pajak harus berupa angka.'; return; }
+    if (!Number.isFinite(pajak)) { galatKolom(pesan, $('#at-pajak'), 'Pajak harus berupa angka.'); return; }
     const data = {
       nama: $('#at-nama').value, alamat: $('#at-alamat').value, telepon: $('#at-telepon').value,
       mode: $('#at-mode').value, pajakPersen: pajak, prefixNota: $('#at-prefix').value,
@@ -2817,7 +2841,7 @@
       renderPengguna();
       isiPilihanKasir();
     } catch (g) {
-      wadah.replaceChildren(kosong((g && g.pesan) || 'Gagal memuat pengguna.'));
+      wadah.replaceChildren(galatMuat(g, 'Gagal memuat pengguna.', muatPengguna));
     }
   }
 
@@ -2892,7 +2916,7 @@
       renderFilterKategoriItem();
       renderDaftarItem();
     } catch (g) {
-      $('#daftar-item').replaceChildren(h('div', { class: 'kosong', text: (g && g.pesan) || 'Gagal memuat item.' }));
+      $('#daftar-item').replaceChildren(galatMuat(g, 'Gagal memuat item.', bukaDaftarItem));
     }
   }
 
@@ -3028,7 +3052,7 @@
     pesan.textContent = '';
     const stokAwal = parseQty($('#fi-stok-awal').value || '0');
     const stokMin = parseQty($('#fi-stok-min').value || '0');
-    if (!Number.isFinite(stokAwal) || !Number.isFinite(stokMin)) { pesan.textContent = 'Stok harus berupa angka.'; return; }
+    if (!Number.isFinite(stokAwal) || !Number.isFinite(stokMin)) { galatKolom(pesan, $(Number.isFinite(stokAwal) ? '#fi-stok-min' : '#fi-stok-awal'), 'Stok harus berupa angka.'); return; }
     const data = {
       id: S.itemDiedit ? S.itemDiedit.id : '',
       nama: $('#fi-nama').value,

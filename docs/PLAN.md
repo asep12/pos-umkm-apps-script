@@ -160,5 +160,17 @@ Audit di lebar 360 px (skill mobile-design: target sentuh ≥ 44 px, jarak ≥ 8
 - Baris diskon keranjang tidak meluber; menu "Alat" dibuka ke kanan di HP; tab Stok bisa digeser dengan isyarat pudar.
 - Kartu produk kasir lebih pendek (lebih banyak item terlihat).
 
+## 5f. Hasil audit UI — aksesibilitas & HP (selesai, v1.5.2)
+Audit memakai skill impeccable (audit), antislop-ui/-layoutmobile, emil-design-eng, mobile-design. Skor awal 15/20.
+- **Perbaikan bug**: ID ganda `sb-nama` (nama di sidebar & kolom meja di modal Simpan bill) membuat Simpan bill gagal;
+  kolom modal kini `bill-nama`. Dicek: tidak ada ID ganda lain, tidak ada ID yang dirujuk JS tapi hilang dari HTML.
+- Tombol Bill & tombol akun punya nama untuk pembaca layar (`aria-label`); judul layar kini `<h1>`, sapaan Beranda `<h2>`.
+- Galat validasi klien: kolom ditandai `aria-invalid` + `aria-describedby`, difokuskan, tanda hilang saat diubah (`galatKolom`).
+- Gagal memuat data: pesan + tombol **Coba lagi** di tempat (`galatMuat`), termasuk Beranda.
+- Efek hover hanya untuk perangkat ber-mouse (`@media (hover: hover)`) agar kartu tidak tampak "terpilih" setelah diketuk.
+- Modal & keranjang: `overscroll-behavior: contain`, tinggi `92dvh`; viewport `interactive-widget=resizes-content`
+  agar keyboard HP tidak menutupi tombol di lembar Bayar (**perlu uji di HP Android**).
+- Ditunda (butuh persetujuan desain): Beranda "Perlu tindakan" di atas; polesan P3 (tabular-nums, garis KPI, animasi laci).
+
 ## 6. Fase Berikutnya (ringkas)
 - **Fase 4** (opsional): scanner kamera, RawBT, varian/topping, satuan konversi, bill terbuka, offline ringan, arsip tahunan.

@@ -76,7 +76,7 @@
       <div class="topbar-kiri">
         <span class="logo-mark" aria-hidden="true">K</span>
         <div style="min-width:0">
-          <div id="judul-layar" class="judul-layar"></div>
+          <h1 id="judul-layar" class="judul-layar"></h1>
           <div id="sub-layar" class="sub-layar"></div>
         </div>
       </div>
@@ -100,7 +100,7 @@
       <!-- ---------- DASHBOARD (Admin) ---------- -->
       <section data-layar="dashboard" class="layar" hidden>
         <div class="sapaan">
-          <h1 id="db-sapaan"></h1>
+          <h2 id="db-sapaan"></h2>
           <p id="db-tanggal"></p>
         </div>
         <div id="db-mulai"></div>
@@ -147,7 +147,7 @@
               <kbd class="hanya-desktop">F2</kbd>
             </div>
             <button id="tombol-kamera" class="tombol ikon tombol-alat" type="button" aria-label="Scan barcode dengan kamera" title="Scan barcode dengan kamera" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 8v8M10 8v8M13 8v8M16 8v8"/></svg></button>
-            <button id="tombol-bill" class="tombol tombol-alat" type="button" title="Bill terbuka (meja/pelanggan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8l3 3v15l-3-2-2 2-2-2-2 2-2-2-3 2V6z"/><path d="M9 10h6M9 14h4"/></svg><span class="teks-bill">Bill</span><span id="jumlah-bill" class="lencana-angka" hidden></span></button>
+            <button id="tombol-bill" class="tombol tombol-alat" type="button" title="Bill terbuka (meja/pelanggan)" aria-label="Bill terbuka"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8l3 3v15l-3-2-2 2-2-2-2 2-2-2-3 2V6z"/><path d="M9 10h6M9 14h4"/></svg><span class="teks-bill">Bill</span><span id="jumlah-bill" class="lencana-angka" hidden></span></button>
           </div>
           <div id="filter-kategori" class="chip-baris"></div>
           <div id="grid-produk" class="grid-produk"></div>
@@ -675,7 +675,7 @@
         <h2 id="judul-simpan-bill">Simpan sebagai bill</h2>
         <button id="tutup-simpan-bill" class="tombol ikon teks" type="button" aria-label="Tutup"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
-      <label>Meja / nama pelanggan <input id="sb-nama" maxlength="40" list="saran-meja" placeholder="mis. Meja 3 atau Pak Budi"></label>
+      <label>Meja / nama pelanggan <input id="bill-nama" maxlength="40" list="saran-meja" placeholder="mis. Meja 3 atau Pak Budi"></label>
       <div id="sb-cepat" class="modal-cepat"></div>
       <label>Catatan <input id="sb-catatan" maxlength="200" placeholder="opsional, mis. tanpa gula"></label>
       <button class="tombol utama besar" type="submit">Simpan bill</button>
